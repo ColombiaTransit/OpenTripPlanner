@@ -162,6 +162,11 @@ public class RaptorPathToItineraryMapper {
         }
 
         leg.serviceDate = new ServiceDate(tripSchedule.getServiceDate());
+        if(tripTimes.frequency != null) {
+            leg.tripFrequency = tripTimes.frequency;
+            leg.tripFrequencyStartTime = tripTimes.getDepartureTime(0);
+        }
+
         leg.intermediateStops = new ArrayList<>();
         leg.startTime = createCalendar(pathLeg.fromTime());
         leg.endTime = createCalendar(pathLeg.toTime());
@@ -178,7 +183,6 @@ public class RaptorPathToItineraryMapper {
         leg.headsign = tripTimes.getHeadsign(boardStopIndexInPattern);
         leg.walkSteps = new ArrayList<>();
         leg.generalizedCost = pathLeg.generalizedCost();
-
         leg.bookingInfo = tripTimes.getBookingInfo(boardStopIndexInPattern);
 
         // TODO OTP2 - alightRule and boardRule needs mapping

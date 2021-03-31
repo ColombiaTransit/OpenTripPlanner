@@ -2,20 +2,19 @@ package org.opentripplanner.model.base;
 
 import static java.lang.Boolean.TRUE;
 
-import java.util.BitSet;
-import org.opentripplanner.model.TransitEntity;
-import org.opentripplanner.util.time.DurationUtils;
-import org.opentripplanner.util.time.TimeUtils;
-
-import javax.validation.constraints.NotNull;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
+import org.opentripplanner.model.TransitEntity;
+import org.opentripplanner.util.time.DurationUtils;
+import org.opentripplanner.util.time.TimeUtils;
 
 /**
  * This toString builder witch add elements to a compact string of the form:
@@ -147,6 +146,13 @@ public class ToStringBuilder {
      */
     public ToStringBuilder addCalTime(String name, Calendar time) {
         return addIfNotNull(name, time, t -> formatTime(t.getTime()));
+    }
+
+    /**
+     * Add time in seconds since midnight. Format:  hh:mm:ss.
+     */
+    public ToStringBuilder addServiceTime(String name, int timeSecondsPastMidnight) {
+        return addServiceTime(name, timeSecondsPastMidnight, Integer.MIN_VALUE);
     }
 
     /**

@@ -163,7 +163,11 @@ public class ToStringBuilderTest {
     int seconds = TimeUtils.time("2:30:04");
     assertEquals(
         "ToStringBuilderTest{t: 2:30:04}",
-        subject().addServiceTime("t", seconds, -1).toString()
+        subject().addServiceTime("t", seconds).toString()
+    );
+    assertEquals(
+            "ToStringBuilderTest{}",
+            subject().addServiceTime("ignoreTime", -1, -1).toString()
     );
   }
 

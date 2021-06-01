@@ -170,8 +170,12 @@ public class ToStringBuilderTest {
 
     // Expect ignore value
     assertEquals(
+        "ToStringBuilderTest{t: 2:30:04}",
+        subject().addServiceTime("t", seconds).toString()
+    );
+    assertEquals(
             "ToStringBuilderTest{}",
-            subject().addServiceTime("t", -1, -1).toString()
+            subject().addServiceTime("ignoreTime", -1, -1).toString()
     );
   }
 

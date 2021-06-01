@@ -156,13 +156,6 @@ public class ToStringBuilder {
     }
 
     /**
-     * Add time in seconds since midnight. Format:  hh:mm:ss.
-     */
-    public ToStringBuilder addServiceTime(String name, int timeSecondsPastMidnight) {
-        return addServiceTime(name, timeSecondsPastMidnight, Integer.MIN_VALUE);
-    }
-
-    /**
      * Add time in seconds since midnight. Format:  hh:mm:ss. Ignore default values.
      */
     public ToStringBuilder addServiceTime(String name, int timeSecondsPastMidnight, int ignoreValue) {

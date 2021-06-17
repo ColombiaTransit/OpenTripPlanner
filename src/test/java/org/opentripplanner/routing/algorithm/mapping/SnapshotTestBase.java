@@ -66,12 +66,12 @@ public abstract class SnapshotTestBase {
     protected Router router;
 
     public static void loadGraphBeforeClass() {
-        ConstantsForTests.getInstance().getPortlandGraph();
+        ConstantsForTests.getInstance().getCachedPortlandGraph();
     }
 
     protected Router getRouter() {
         if (router == null) {
-            Graph graph = ConstantsForTests.getInstance().getPortlandGraph();
+            Graph graph = ConstantsForTests.getInstance().getCachedPortlandGraph();
 
             router = new Router(graph, RouterConfig.DEFAULT);
             router.startup();
@@ -341,5 +341,18 @@ public abstract class SnapshotTestBase {
         public String getOutputFormat() {
             return SerializerType.JSON.name();
         }
+    }
+
+    /**
+     * The generalizedCost for non-transit legs may differ for departAt / arriveBy searches,
+     * depending on where the costs were applied.
+     */
+    public static void handleGeneralizedCost(Itinerary departAt, Itinerary arriveBy) {
+        departAt.legs.stream()
+                .filter(l -> !l.mode.isTransit())
+                .forEach(l -> l.generalizedCost = 0);
+        arriveBy.legs.stream()
+                .filter(l -> !l.mode.isTransit())
+                .forEach(l -> l.generalizedCost = 0);
     }
 }

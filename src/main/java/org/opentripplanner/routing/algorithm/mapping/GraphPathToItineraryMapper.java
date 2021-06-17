@@ -113,7 +113,7 @@ public abstract class GraphPathToItineraryMapper {
 
         boolean first = true;
         for (Leg leg : legs) {
-            AlertToLegMapper.addAlertPatchesToLeg(graph, leg, first, requestedLocale);
+            AlertToLegMapper.addTransitAlertPatchesToLeg(graph, leg, first, requestedLocale);
             first = false;
         }
 
@@ -274,6 +274,8 @@ public abstract class GraphPathToItineraryMapper {
 
         leg.legGeometry = PolylineEncoder.createEncodings(geometry);
 
+        leg.generalizedCost = (int) (states[states.length - 1].getWeight() - states[0].getWeight());
+
         // Interlining information is now in a separate field in Graph, not in edges.
         // But in any case, with Raptor this method is only being used to translate non-transit legs of paths.
         leg.interlineWithPreviousLeg = false;
@@ -287,7 +289,7 @@ public abstract class GraphPathToItineraryMapper {
             }
         }
 
-        addAlerts(graph, leg, states);
+        addStreetNotes(graph, leg, states);
 
         if (flexEdge != null) {
             FlexLegMapper.fixFlexTripLeg(leg, flexEdge);
@@ -408,7 +410,7 @@ public abstract class GraphPathToItineraryMapper {
      * @param leg The leg to add the mode and alerts to
      * @param states The states that go with the leg
      */
-    private static void addAlerts(Graph graph, Leg leg, State[] states) {
+    private static void addStreetNotes(Graph graph, Leg leg, State[] states) {
         for (State state : states) {
             Set<StreetNote> streetNotes = graph.streetNotesService.getNotes(state);
 

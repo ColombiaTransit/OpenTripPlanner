@@ -31,6 +31,7 @@
 - Improve the dynamic search window calculation. The configuration parameters `minTransitTimeCoefficient` and `minWaitTimeCoefficient` replace the old `minTripTimeCoefficient` parameter. [#3366](https://github.com/opentripplanner/OpenTripPlanner/issues/3366)
 - Partial support for frequency.txt file. [#3262](https://github.com/opentripplanner/OpenTripPlanner/issues/3262)
 - Allow the removal of P+R results consisting only of driving of walking [#3515](https://github.com/opentripplanner/OpenTripPlanner/pull/3515)
+- Per-mode reluctance parameters are added so that itineraries with multiple modes may have varying reluctances. [#3501](https://github.com/opentripplanner/OpenTripPlanner/issues/3501)
 
 ## 2.0.0 (2020-11-27)
 

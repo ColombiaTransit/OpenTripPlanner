@@ -230,8 +230,8 @@ public class TripTimes implements Serializable, Comparable<TripTimes>, Cloneable
         this.timepoints = base.timepoints;
         this.pickups = base.pickups;
         this.dropoffs = base.dropoffs;
-        this.dropOffBookingInfos = object.dropOffBookingInfos;
-        this.pickupBookingInfos = object.pickupBookingInfos;
+        this.dropOffBookingInfos = base.dropOffBookingInfos;
+        this.pickupBookingInfos = base.pickupBookingInfos;
         this.frequency = frequency;
         this.timeShift  = timeShift;
     }

@@ -174,6 +174,11 @@ public class Leg {
 
     public Transfer transferToNextLeg = null;
 
+    /**
+     * Is this leg walking with a bike?
+     */
+    public Boolean walkingBike;
+
     public Boolean rentedBike;
 
    public List<String> bikeRentalNetworks = new ArrayList<>();
@@ -347,6 +352,7 @@ public class Leg {
                 .addCol("transitAlerts", transitAlerts)
                 .addStr("boardRule", boardRule)
                 .addStr("alightRule", alightRule)
+                .addBool("walkingBike", walkingBike)
                 .addBool("rentedBike", rentedBike)
                 .addCol("bikeRentalNetworks", bikeRentalNetworks)
                 .toString();

@@ -5,29 +5,22 @@ import com.google.transit.realtime.GtfsRealtime.TripDescriptor;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeEvent;
 import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
-import org.opentripplanner.model.calendar.ServiceDate;
-import org.opentripplanner.routing.core.ServiceDay;
-import org.opentripplanner.routing.trippattern.FrequencyEntry;
-import org.opentripplanner.routing.trippattern.TripTimes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import org.opentripplanner.model.calendar.ServiceDate;
+import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.trippattern.TripTimes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
  * Timetables provide most of the TripPattern functionality. Each TripPattern may possess more than
  * one Timetable when stop time updates are being applied: one for the scheduled stop times, one for
  * each snapshot of updated stop times, another for a working buffer of updated stop times, etc.
- *
- *  TODO OTP2 - Move this to package: org.opentripplanner.model
- *            - after as Entur NeTEx PRs are merged.
- *            - Also consider moving its dependencies in: org.opentripplanner.routing
- *            - The NEW Timetable should not have any dependencies to
  */
 public class Timetable implements Serializable {
 
@@ -38,9 +31,11 @@ public class Timetable implements Serializable {
 
     private final List<TripTimes> tripTimes = Lists.newArrayList();
 
+    public final ServiceDate serviceDate;
+    /**
+     * The ServiceDate for which this (updated) timetable is valid. If null, then it is valid for all dates.
+     */
     private final List<FrequencyEntry> frequencyEntries = Lists.newArrayList();
-
-    private final ServiceDate serviceDate;
 
     /** 
      * Helps determine whether a particular pattern is worth searching for departures at a given time. 
@@ -98,19 +93,24 @@ public class Timetable implements Serializable {
         // Concatenate raw TripTimes and those referenced from FrequencyEntries
         List<TripTimes> allTripTimes = Lists.newArrayList(tripTimes);
         for (FrequencyEntry freq : frequencyEntries) allTripTimes.add(freq.tripTimes);
-
+        for (TripTimes tt : allTripTimes) {
+            for (int h = 0; h < nHops; ++h) {
+                int dt = tt.getDwellTime(h);
+                if (minDwellTimes[h] > dt) {
+                    minDwellTimes[h] = dt;
+                }
+                int rt = tt.getRunningTime(h);
+                if (minRunningTimes[h] > rt) {
+                    minRunningTimes[h] = rt;
+                }
+            }
+        }
         /* Find the time range over which this timetable is active. Allows departure search optimizations. */
         minTime = Integer.MAX_VALUE;
         maxTime = Integer.MIN_VALUE;
         for (TripTimes tt : tripTimes) {
             minTime = Math.min(minTime, tt.getDepartureTime(0));
             maxTime = Math.max(maxTime, tt.getArrivalTime(nStops - 1));
-        }
-        // Slightly repetitive code.
-        // Again it seems reasonable to have a shared interface between FrequencyEntries and normal TripTimes.
-        for (FrequencyEntry freq : frequencyEntries) {
-            minTime = Math.min(minTime, freq.getMinDeparture());
-            maxTime = Math.max(maxTime, freq.getMaxArrival());
         }
     }
 
@@ -350,6 +350,32 @@ public class Timetable implements Serializable {
         frequencyEntries.add(freq);
     }
 
+    /**
+     * Check that all dwell times at the given stop are zero, which allows removing the dwell edge.
+     * TODO we should probably just eliminate dwell-deletion. It won't be important if we get rid of transit edges.
+     */
+    boolean allDwellsZero(int hopIndex) {
+        for (TripTimes tt : tripTimes) {
+            if (tt.getDwellTime(hopIndex) != 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Returns the shortest possible running time for this stop */
+    public int getBestRunningTime(int stopIndex) {
+        return minRunningTimes[stopIndex];
+    }
+
+    /** Returns the shortest possible dwell time at this stop */
+    public int getBestDwellTime(int stopIndex) {
+        if (minDwellTimes == null) {
+            return 0;
+        }
+        return minDwellTimes[stopIndex];
+    }
+
     public boolean isValidFor(ServiceDate serviceDate) {
         return this.serviceDate == null || this.serviceDate.equals(serviceDate);
     }
@@ -363,7 +389,7 @@ public class Timetable implements Serializable {
         // Repeated code... bad sign...
         for (FrequencyEntry freq : this.frequencyEntries) {
             TripTimes tt = freq.tripTimes;
-            tt.setServiceCode(serviceCodes.get(tt.getTrip().getServiceId()));
+            tt.serviceCode = serviceCodes.get(tt.trip.getServiceId());
         }
     }
 

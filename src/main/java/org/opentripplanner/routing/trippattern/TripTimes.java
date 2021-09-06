@@ -9,9 +9,11 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.opentripplanner.model.BookingInfo;
 import org.opentripplanner.model.PickDrop;
 import org.opentripplanner.model.StopPattern;
+import org.opentripplanner.model.Frequency;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
@@ -37,6 +39,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
     /** The trips whose arrivals and departures are represented by this TripTimes */
     private final Trip trip;
 
+    /** The code for the service on which this trip runs. For departure search optimizations. */
     // not final because these are set later, after TripTimes construction.
     private int serviceCode = -1;
 
@@ -152,6 +155,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
             pickupBookingInfos.add(st.getPickupBookingInfo());
             s++;
         }
+        this.frequency = null;
         this.scheduledDepartureTimes = deduplicator.deduplicateIntArray(departures);
         this.scheduledArrivalTimes = deduplicator.deduplicateIntArray(arrivals);
         this.originalGtfsStopSequence = deduplicator.deduplicateIntArray(sequences);
@@ -172,6 +176,7 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
     public TripTimes(final TripTimes object) {
         this.timeShift = object.timeShift;
         this.trip = object.trip;
+        this.frequency = object.frequency;
         this.serviceCode = object.serviceCode;
         this.headsigns = object.headsigns;
         this.scheduledArrivalTimes = object.scheduledArrivalTimes;
@@ -185,10 +190,6 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
         this.originalGtfsStopSequence = object.originalGtfsStopSequence;
         this.realTimeState = object.realTimeState;
         this.timepoints = object.timepoints;
-    }
-
-    public void setServiceCode(int serviceCode) {
-        this.serviceCode = serviceCode;
     }
 
     /**
@@ -355,6 +356,15 @@ public class TripTimes implements Serializable, Comparable<TripTimes> {
 
     public void setRealTimeState(final RealTimeState realTimeState) {
         this.realTimeState = realTimeState;
+    }
+
+    /** Used in debugging / dumping times. */
+    public static String formatSeconds(int s) {
+        int m = s / 60;
+        s = s % 60;
+        final int h = m / 60;
+        m = m % 60;
+        return String.format("%02d:%02d:%02d", h, m, s);
     }
 
     /**

@@ -55,7 +55,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 288,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "}f{tGv}{kVjCA?e@WA"
@@ -213,7 +213,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 51,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 2,
             "points": "ic{tGl|{kVV@"
@@ -276,7 +276,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 236,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 6,
             "points": "qb{tGn|{kVGsJEuKE}HAwAAo@"
@@ -395,7 +395,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 49,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 5,
             "points": "ic{tG~uzkV@n@M@C??H"
@@ -675,7 +675,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 285,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 15,
             "points": "}rztGlnwkVM??C?[?SC_D?M?E?MCgD?A?O?C?M?a@"
@@ -791,7 +791,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 865,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 34,
             "points": "}f{tGv}{kVjCAjCEnCCFCFErACj@CLMHGFJLNNNDBDBDBF@FBLBH@FBDBNHNJLDPLb@Z^XPNNTBQT{ARJEP"
@@ -1116,7 +1116,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 579,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 23,
             "points": "oeztGxiwkVE?AgA?OKCKAM?iBBI?K?wBBK?K?sBDM@?E?MCgD?A?O?C?M?a@"
@@ -1283,7 +1283,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 865,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 34,
             "points": "}f{tGv}{kVjCAjCEnCCFCFErACj@CLMHGFJLNNNDBDBDBF@FBLBH@FBDBNHNJLDPLb@Z^XPNNTBQT{ARJEP"
@@ -1608,7 +1608,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 472,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 18,
             "points": "qeztGn|vkVK@?v@@f@?RWBK@kBBI?K?wBBI?K?I?mBBK@?M?a@"
@@ -1775,7 +1775,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 336,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 6,
             "points": "}f{tGv}{kVC?mCBmCD@zCN?"
@@ -2049,7 +2049,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 77,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 3,
             "points": "ksztGh{vkVI?@~B"
@@ -2165,7 +2165,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 288,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "}f{tGv}{kVjCA?e@WA"
@@ -2323,7 +2323,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 51,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 2,
             "points": "ic{tGl|{kVV@"
@@ -2386,7 +2386,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 236,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 6,
             "points": "qb{tGn|{kVGsJEuKE}HAwAAo@"
@@ -2505,7 +2505,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 49,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 5,
             "points": "ic{tG~uzkV@n@M@C??H"
@@ -2785,7 +2785,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 285,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 15,
             "points": "}rztGlnwkVM??C?[?SC_D?M?E?MCgD?A?O?C?M?a@"
@@ -2901,7 +2901,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 288,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "}f{tGv}{kVjCA?e@WA"
@@ -3059,7 +3059,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 51,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 2,
             "points": "ic{tGl|{kVV@"
@@ -3122,7 +3122,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 236,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 6,
             "points": "qb{tGn|{kVGsJEuKE}HAwAAo@"
@@ -3241,7 +3241,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 49,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 5,
             "points": "ic{tG~uzkV@n@M@C??H"
@@ -3521,7 +3521,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 285,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 15,
             "points": "}rztGlnwkVM??C?[?SC_D?M?E?MCgD?A?O?C?M?a@"
@@ -3616,7 +3616,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 288,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "}f{tGv}{kVjCA?e@WA"
@@ -3774,7 +3774,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 51,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 2,
             "points": "ic{tGl|{kVV@"
@@ -3837,7 +3837,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 236,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 6,
             "points": "qb{tGn|{kVGsJEuKE}HAwAAo@"
@@ -3956,7 +3956,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 338,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "ic{tG~uzkVEcJlCE?C"
@@ -4092,7 +4092,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 288,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "}f{tGv}{kVjCA?e@WA"
@@ -4250,7 +4250,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 65,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 2,
             "points": "ic{tGl|{kVV@"
@@ -4313,7 +4313,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 298,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 10,
             "points": "qb{tGn|{kVGsJL?F?tBCEuK?g@GmJEuK?C"
@@ -4444,7 +4444,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 288,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "}f{tGv}{kVjCA?e@WA"
@@ -4602,7 +4602,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 51,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 2,
             "points": "ic{tGl|{kVV@"
@@ -4665,7 +4665,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.directBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 312,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 9,
             "points": "qb{tGn|{kVGsJEuKE}HAwAAo@EcJlCE?C"
@@ -4823,7 +4823,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 261,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 10,
             "points": "ssztGh_wkV?`@?LK?uBBK??F?JBbDN?"
@@ -5114,7 +5114,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 167,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "wb{tG`wzkV?LO?Ao@"
@@ -5255,7 +5255,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 196,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 6,
             "points": "ic{tG~uzkV@n@@vAD|HDtKFrJ"
@@ -5318,7 +5318,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 81,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 2,
             "points": "qb{tGn|{kVWA"
@@ -5437,7 +5437,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 168,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "ic{tGl|{kVV@?d@kC@"
@@ -5593,7 +5593,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 442,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 17,
             "points": "ssztGh_wkV?`@?LJAlBCH?J?H?vBCJ?H?jBCJA?D@L?lAE?"
@@ -5884,7 +5884,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 858,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 34,
             "points": "ikztGh~{kVNDEVUzACPOUQO_@Yc@[QMMEOKOIECGCIAMCGCGAECECECOOMOGKIFMLk@BsABGDGBoCBkCDkC@"
@@ -6051,7 +6051,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 392,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 15,
             "points": "ssztGh_wkV?`@?LK?uBBK?K@sBBM??D?L@\\?lCC??E"
@@ -6359,7 +6359,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 881,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 12,
             "points": "}~{tGnq{kV?LVAF?J?FtKlCClCEnCElCElCCB?"
@@ -6509,7 +6509,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 261,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 10,
             "points": "ssztGh_wkV?`@?LK?uBBK??F?JBbDN?"
@@ -6800,7 +6800,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 167,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "wb{tG`wzkV?LO?Ao@"
@@ -6941,7 +6941,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 196,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 6,
             "points": "ic{tG~uzkV@n@@vAD|HDtKFrJ"
@@ -7004,7 +7004,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 81,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 2,
             "points": "qb{tGn|{kVWA"
@@ -7123,7 +7123,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "BIKESHARE"
           },
           "generalizedCost": 168,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 4,
             "points": "ic{tGl|{kVV@?d@kC@"
@@ -7279,7 +7279,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 442,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 17,
             "points": "ssztGh_wkV?`@?LJAlBCH?J?H?vBCJ?H?jBCJA?D@L?lAE?"
@@ -7570,7 +7570,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 858,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 34,
             "points": "ikztGh~{kVNDEVUzACPOUQO_@Yc@[QMMEOKOIECGCIAMCGCGAECECECOOMOGKIFMLk@BsABGDGBoCBkCDkC@"
@@ -7737,7 +7737,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "NORMAL"
           },
           "generalizedCost": 392,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 15,
             "points": "ssztGh_wkV?`@?LK?uBBK?K@sBBM??D?L@\\?lCC??E"
@@ -8045,7 +8045,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
             "vertexType": "TRANSIT"
           },
           "generalizedCost": 881,
-          "interlineWithPreviousLeg": false,
+          "interlinedWithPreviousLeg": false,
           "legGeometry": {
             "length": 12,
             "points": "}~{tGnq{kV?LVAF?J?FtKlCClCEnCElCElCCB?"

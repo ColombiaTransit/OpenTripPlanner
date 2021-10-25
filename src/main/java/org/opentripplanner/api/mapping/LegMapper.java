@@ -49,8 +49,6 @@ public class LegMapper {
         api.departureDelay = domain.departureDelay;
         api.arrivalDelay = domain.arrivalDelay;
         api.realTime = domain.realTime;
-        api.isNonExactFrequency = domain.isNonExactFrequency;
-        api.headway = domain.headway;
         api.distance = domain.distanceMeters;
         api.generalizedCost = domain.generalizedCost;
         api.pathway = domain.pathway;
@@ -78,6 +76,10 @@ public class LegMapper {
             api.tripId = FeedScopedIdMapper.mapToApi(trip.getId());
             api.tripShortName = trip.getTripShortName();
             api.tripBlockId = trip.getBlockId();
+            if(domain.tripFrequency != null) {
+                api.headway = domain.tripFrequency.getHeadwaySecs();
+                api.isNonExactFrequency = !domain.tripFrequency.isExactHeadway();
+            }
         }
         else if (domain.pathway) {
             api.route = FeedScopedIdMapper.mapToApi(domain.pathwayId);

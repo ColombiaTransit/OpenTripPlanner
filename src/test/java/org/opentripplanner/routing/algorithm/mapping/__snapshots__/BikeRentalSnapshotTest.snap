@@ -3340,7 +3340,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
             "vertexType": "TRANSIT"
           },
           "transitAlerts": [ ],
-          "transitLeg": true,          
+          "transitLeg": true,
           "trip": {
             "alteration": "PLANNED",
             "bikesAllowed": "UNKNOWN",

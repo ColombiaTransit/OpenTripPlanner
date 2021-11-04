@@ -1,8 +1,5 @@
 package org.opentripplanner.netex.mapping;
 
-import java.util.List;
-import javax.annotation.Nullable;
-import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.GroupOfStations;
 import org.opentripplanner.model.MultiModalStation;
@@ -14,10 +11,15 @@ import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
 import org.rutebanken.netex.model.GroupOfStopPlaces;
 import org.rutebanken.netex.model.StopPlaceRefStructure;
 import org.rutebanken.netex.model.StopPlaceRefs_RelStructure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 class GroupOfStationsMapper {
 
-    private final DataImportIssueStore issueStore;
+    private static final Logger LOG = LoggerFactory.getLogger(GroupOfStationsMapper.class);
 
     private final FeedScopedIdFactory idFactory;
 
@@ -27,12 +29,10 @@ class GroupOfStationsMapper {
 
 
     GroupOfStationsMapper(
-            DataImportIssueStore issueStore,
             FeedScopedIdFactory idFactory,
             EntityById<MultiModalStation> multiModalStations,
             EntityById<Station> stations
     ) {
-        this.issueStore = issueStore;
         this.idFactory = idFactory;
         this.multiModalStations = multiModalStations;
         this.stations = stations;
@@ -46,8 +46,8 @@ class GroupOfStationsMapper {
         WgsCoordinate coordinate = WgsCoordinateMapper.mapToDomain(groupOfStopPlaces.getCentroid());
 
         if (coordinate == null) {
-            issueStore.add(
-                    "GroupOfStationWithoutCoordinates",
+            // TODO OTP2 - This should be an data import issue
+            LOG.warn(
                     "MultiModal station {} does not contain any coordinates.",
                     groupOfStations.getId()
             );
@@ -74,12 +74,7 @@ class GroupOfStationsMapper {
                 if (station != null) {
                     groupOfStations.addChildStation(station);
                 } else {
-                    issueStore.add(
-                            "GroupOfStationWithoutStations",
-                            "GroupOfStation %s child not found: %s",
-                            groupOfStations.getId(),
-                            stationId
-                    );
+                    LOG.warn("GroupOfStation {} child not found: {}", groupOfStations.getId(), stationId);
                 }
             }
         }

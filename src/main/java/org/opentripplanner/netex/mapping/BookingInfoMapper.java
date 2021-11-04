@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.model.BookingInfo;
 import org.opentripplanner.model.BookingMethod;
 import org.opentripplanner.model.BookingTime;
@@ -22,6 +21,8 @@ import org.rutebanken.netex.model.MultilingualString;
 import org.rutebanken.netex.model.PurchaseWhenEnumeration;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.rutebanken.netex.model.StopPointInJourneyPattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Maps booking info from NeTEx BookingArrangements, FlexibleServiceProperties, and FlexibleLine
@@ -33,14 +34,10 @@ import org.rutebanken.netex.model.StopPointInJourneyPattern;
  * 3. FlexibleLine
  */
 public class BookingInfoMapper {
-  private final DataImportIssueStore issueStore;
-
-  BookingInfoMapper(DataImportIssueStore issueStore) {
-    this.issueStore = issueStore;
-  }
+  private static final Logger LOG = LoggerFactory.getLogger(BookingInfoMapper.class);
 
   @Nullable
-  BookingInfo map(
+  static BookingInfo map(
       StopPointInJourneyPattern stopPoint,
       ServiceJourney serviceJourney,
       FlexibleLine flexibleLine
@@ -60,7 +57,7 @@ public class BookingInfoMapper {
     return null;
   }
 
-  private  BookingInfo map(BookingArrangementsStructure bookingArrangements, String entityRef) {
+  private static BookingInfo map(BookingArrangementsStructure bookingArrangements, String entityRef) {
     return map(
         bookingArrangements.getBookingContact(),
         bookingArrangements.getBookingMethods(),
@@ -72,7 +69,7 @@ public class BookingInfoMapper {
     );
   }
 
-  private  BookingInfo map(FlexibleServiceProperties serviceProperties, String entityRef) {
+  private static BookingInfo map(FlexibleServiceProperties serviceProperties, String entityRef) {
     return map(
         serviceProperties.getBookingContact(),
         serviceProperties.getBookingMethods(),
@@ -84,7 +81,7 @@ public class BookingInfoMapper {
     );
   }
 
-  private  BookingInfo map(FlexibleLine flexibleLine, String entityRef) {
+  private static BookingInfo map(FlexibleLine flexibleLine, String entityRef) {
     return map(
         flexibleLine.getBookingContact(),
         flexibleLine.getBookingMethods(),
@@ -96,7 +93,7 @@ public class BookingInfoMapper {
     );
   }
 
-  private BookingInfo map(
+  private static BookingInfo map(
       ContactStructure contactStructure,
       List<BookingMethodEnumeration> bookingMethodEnum,
       LocalTime latestBookingTime,
@@ -137,15 +134,13 @@ public class BookingInfoMapper {
       otpEarliestBookingTime = mapEarliestBookingTime(bookWhen);
       otpLatestBookingTime = mapLatestBookingTime(latestBookingTime, bookWhen);
 
-      if (minimumBookingPeriod != null) {
-        issueStore.add(
-            "BookingInfoPeriodIgnored",
+      if (minimumBookingPeriod != null)
+        LOG.warn(
             "MinimumBookingPeriod cannot be set if latestBookingTime is set. "
-                + "MinimumBookingPeriod will be ignored for: %s, entity: %s",
+            + "MinimumBookingPeriod will be ignored for: {}, entity: {}",
             contactStructure,
             entityRef
         );
-      }
     }
     else if (minimumBookingPeriod != null) {
       minimumBookingNotice = minimumBookingPeriod;

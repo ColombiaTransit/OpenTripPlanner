@@ -1,19 +1,18 @@
 package org.opentripplanner.netex.mapping;
 
-import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.model.Station;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
 import org.rutebanken.netex.model.StopPlace;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class StationMapper {
 
-  private final DataImportIssueStore issueStore;
+  private static final Logger LOG = LoggerFactory.getLogger(StationMapper.class);
 
   private final FeedScopedIdFactory idFactory;
 
-  StationMapper(DataImportIssueStore issueStore, FeedScopedIdFactory idFactory) {
-    this.issueStore = issueStore;
+  StationMapper(FeedScopedIdFactory idFactory) {
     this.idFactory = idFactory;
   }
 
@@ -30,11 +29,7 @@ class StationMapper {
     );
 
     if (station.getCoordinate() == null) {
-      issueStore.add(
-              "StationWithoutCoordinates",
-              "Station %i does not contain any coordinates.",
-              station.getId()
-      );
+      LOG.warn("Station {} does not contain any coordinates.", station.getId());
     }
     return station;
   }

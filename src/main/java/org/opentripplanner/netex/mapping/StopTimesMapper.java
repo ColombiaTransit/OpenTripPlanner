@@ -1,16 +1,12 @@
 package org.opentripplanner.netex.mapping;
 
-import static org.opentripplanner.model.PickDrop.COORDINATE_WITH_DRIVER;
-import static org.opentripplanner.model.PickDrop.NONE;
-import static org.opentripplanner.model.PickDrop.SCHEDULED;
-
 import java.math.BigInteger;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.xml.bind.JAXBElement;
-import org.opentripplanner.graph_builder.DataImportIssueStore;
+
 import org.opentripplanner.model.BookingInfo;
 import org.opentripplanner.model.FlexLocationGroup;
 import org.opentripplanner.model.FlexStopLocation;
@@ -32,6 +28,12 @@ import org.rutebanken.netex.model.Route;
 import org.rutebanken.netex.model.ServiceJourney;
 import org.rutebanken.netex.model.StopPointInJourneyPattern;
 import org.rutebanken.netex.model.TimetabledPassingTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.opentripplanner.model.PickDrop.NONE;
+import static org.opentripplanner.model.PickDrop.COORDINATE_WITH_DRIVER;
+import static org.opentripplanner.model.PickDrop.SCHEDULED;
 
 /**
  * This maps a list of TimetabledPassingTimes to a list of StopTimes. It also makes sure the StopTime has a reference
@@ -41,7 +43,7 @@ import org.rutebanken.netex.model.TimetabledPassingTime;
  */
 class StopTimesMapper {
 
-    private final DataImportIssueStore issueStore;
+    private static final Logger LOG = LoggerFactory.getLogger(TripPatternMapper.class);
 
     private static final int DAY_IN_SECONDS = 3600 * 24;
 
@@ -66,7 +68,6 @@ class StopTimesMapper {
     private String currentHeadSign;
 
     StopTimesMapper(
-            DataImportIssueStore issueStore,
             FeedScopedIdFactory idFactory,
             EntityById<Stop> stopsById,
             EntityById<FlexStopLocation> flexStopLocationsById,
@@ -77,7 +78,6 @@ class StopTimesMapper {
             ReadOnlyHierarchicalMapById<FlexibleLine> flexibleLinesById,
             ReadOnlyHierarchicalMap<String, Route> routeById
     ) {
-        this.issueStore = issueStore;
         this.idFactory = idFactory;
         this.destinationDisplayById = destinationDisplayById;
         this.stopsById = stopsById;
@@ -112,8 +112,7 @@ class StopTimesMapper {
 
             StopLocation stop = lookUpStopLocation(stopPoint);
             if (stop == null) {
-                issueStore.add(
-                        "JourneyPatternStopNotFound",
+                LOG.warn(
                         "Stop with id {} not found for StopPoint {} in JourneyPattern {}. "
                                 + "Trip {} will not be mapped.",
                         stopPoint != null && stopPoint.getScheduledStopPointRef() != null
@@ -134,7 +133,7 @@ class StopTimesMapper {
             }
 
 
-            BookingInfo bookingInfo = new BookingInfoMapper(issueStore).map(
+            BookingInfo bookingInfo = BookingInfoMapper.map(
                     stopPoint,
                     serviceJourney,
                     lookUpFlexibleLine(serviceJourney, journeyPattern)
@@ -205,12 +204,15 @@ class StopTimesMapper {
         }
 
         if (passingTime.getArrivalTime() == null && passingTime.getDepartureTime() == null) {
-            issueStore.add("TripWithoutTime","Time missing for trip %i", trip.getId());
+            LOG.warn("Time missing for trip " + trip.getId());
         }
 
         if (currentHeadSign != null) {
             stopTime.setStopHeadsign(currentHeadSign);
         }
+
+
+
         return stopTime;
     }
 
@@ -224,11 +226,7 @@ class StopTimesMapper {
         String flexibleStopPlaceId = flexibleStopPlaceIdByStopPointRef.lookup(stopPointRef);
 
         if (stopId == null && flexibleStopPlaceId == null) {
-            issueStore.add(
-                    "PassengerStopAssignmentNotFound",
-                    "No passengerStopAssignment found for %i",
-                    stopPointRef
-            );
+            LOG.warn("No passengerStopAssignment found for " + stopPointRef);
             return null;
         }
 
@@ -246,11 +244,7 @@ class StopTimesMapper {
         }
 
         if (stopLocation == null) {
-            issueStore.add(
-                    "StopPointInJourneyPatternMissingStopLocation",
-                    "No Quay or FlexibleStopPlace found for %s",
-                    stopPointRef
-            );
+            LOG.warn("No Quay or FlexibleStopPlace found for " + stopPointRef);
         }
 
         return stopLocation;

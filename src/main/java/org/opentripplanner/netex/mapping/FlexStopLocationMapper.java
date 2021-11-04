@@ -1,7 +1,5 @@
 package org.opentripplanner.netex.mapping;
 
-import java.util.Collection;
-import java.util.Optional;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
@@ -18,14 +16,16 @@ import org.rutebanken.netex.model.KeyValueStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class FlexStopLocationMapper {
+import java.util.Collection;
+import java.util.Optional;
 
-  private static final Logger LOG = LoggerFactory.getLogger(FlexStopLocationMapper.class);
+class FlexStopLocationMapper {
 
   private final FeedScopedIdFactory idFactory;
 
   private final HashGridSpatialIndex<Stop> stopsSpatialIndex;
 
+  private static final Logger LOG = LoggerFactory.getLogger(FlexStopLocationMapper.class);
 
   /**
    * Key-value pair used until proper NeTEx support is added

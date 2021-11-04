@@ -382,7 +382,6 @@ public class SpeedTest {
                 null,
                 transitLayer,
                 request.getDepartureDateWithZone().toInstant(),
-                0,
                 1,
                 transitDataProviderFilter,
                 Transfer.prepareTransferRoutingRequest(routingRequest)

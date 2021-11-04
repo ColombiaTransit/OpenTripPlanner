@@ -1,9 +1,5 @@
 package org.opentripplanner.netex.mapping;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import javax.xml.bind.JAXBElement;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.locationtech.jts.geom.Coordinate;
@@ -22,6 +18,13 @@ import org.rutebanken.netex.model.LinkSequenceProjection_VersionStructure;
 import org.rutebanken.netex.model.Quay;
 import org.rutebanken.netex.model.ServiceLink;
 import org.rutebanken.netex.model.ServiceLinkInJourneyPattern_VersionedChildStructure;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.xml.bind.JAXBElement;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Maps NeTEx ServiceLinks til OTP ShapePoints. NeTEx defines a ServiceLink as a link between an
@@ -43,7 +46,8 @@ import org.rutebanken.netex.model.ServiceLinkInJourneyPattern_VersionedChildStru
  */
 class ServiceLinkMapper {
 
-  private final FeedScopedIdFactory idFactory;
+  private static final Logger LOG = LoggerFactory.getLogger(StopMapper.class);
+    private final FeedScopedIdFactory idFactory;
   private final DataImportIssueStore issueStore;
 
   ServiceLinkMapper(FeedScopedIdFactory idFactory, DataImportIssueStore issueStore) {
@@ -158,11 +162,8 @@ class ServiceLinkMapper {
           distanceCounter.add(distance != -1 ? distance : 0);
         }
         else {
-          issueStore.add(
-                  "ServiceLinkWithoutLineString",
-                  "Ignore linkSequenceProjection without linestring for: %s",
-                  linkSequenceProjection
-          );
+          LOG.warn("Ignore linkSequenceProjection without linestring for: "
+              + linkSequenceProjection.toString());
         }
       }
     }
@@ -229,11 +230,8 @@ class ServiceLinkMapper {
 
     }
     else {
-      issueStore.add(
-          "ServiceLinkWithoutQuay",
-          "Ignore service link without projection and missing or unknown quays. Link: %s",
-          serviceLink
-      );
+      LOG.warn(
+          "Ignore service link without projection and missing or unknown quays: " + serviceLink);
     }
   }
 

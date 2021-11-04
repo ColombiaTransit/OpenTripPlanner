@@ -223,7 +223,7 @@ public class RangeRaptorDynamicSearch<T extends RaptorTripSchedule> {
             return originalRequest;
         }
         return originalRequest.mutate().searchParams()
-                .earliestDepartureTime(transitData.getValidTransitDataStartTime())
+                .earliestDepartureTime(dynamicSearchParamsCalculator.getEarliestDepartureTime())
                 .build();
     }
 
@@ -232,7 +232,7 @@ public class RangeRaptorDynamicSearch<T extends RaptorTripSchedule> {
             return originalRequest;
         }
         return originalRequest.mutate().searchParams()
-                .latestArrivalTime(transitData.getValidTransitDataEndTime())
+                .latestArrivalTime(dynamicSearchParamsCalculator.getLatestArrivalTime())
                 .build();
     }
 

@@ -83,19 +83,19 @@ public class HierarchicalVersionMapById<V extends EntityInVersionStructure>
         String id = ref.getRef();
         String version = ref.getVersion();
 
-        Collection<V> list = lookup(id);
-
-        if(list.isEmpty()) { return null; }
-
         if(version != null) {
-            for (V value : list) {
+            for (V value : lookup(id)) {
                 if(version.equals(value.getVersion())) {
                     return value;
                 }
             }
+            throw new IllegalArgumentException(
+                    "Inconsistent version. " + ref.getNameOfRefClass() + " with id " + id +
+                            " and version " + version + " not found."
+            );
         }
         // Fallback to the latest version of the element.
-        return firstValidBestVersion(list, timestamp);
+        return firstValidBestVersion(lookup(id), timestamp);
     }
 
     @Override

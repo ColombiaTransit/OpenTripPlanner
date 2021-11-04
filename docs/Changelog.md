@@ -73,10 +73,6 @@
 - Vehicle rental updates [#3632](https://github.com/opentripplanner/OpenTripPlanner/pull/3632)
 - debug-client: add url handling and extend the displayed fields [#3712](https://github.com/opentripplanner/OpenTripPlanner/pull/3712)
 - add trolleybus & monorail support [#3658](https://github.com/opentripplanner/OpenTripPlanner/pull/3658)
-- Improve NeTEx import issue report [#3719](https://github.com/opentripplanner/OpenTripPlanner/pull/3719)
-- Do not create zero length StreetEdges [#3716](https://github.com/opentripplanner/OpenTripPlanner/pull/3716)
-- Add pickup and dropoff booking info to REST API [#3710](https://github.com/opentripplanner/OpenTripPlanner/pull/3710)
-- Use the whole duration of the filtered transit data for the raptor heuristic search [#3664](https://github.com/opentripplanner/OpenTripPlanner/pull/3664)
 [](AUTOMATIC_CHANGELOG_PLACEHOLDER_DO_NOT_REMOVE)
 
 ## 2.0.0 (2020-11-27)

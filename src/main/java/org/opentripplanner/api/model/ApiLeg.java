@@ -203,10 +203,6 @@ public class ApiLeg {
 
     public String alightRule;
 
-    public ApiBookingInfo pickupBookingInfo;
-
-    public ApiBookingInfo dropOffBookingInfo;
-
     public Boolean rentedBike;
 
      /**

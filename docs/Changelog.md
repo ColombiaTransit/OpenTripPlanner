@@ -82,7 +82,7 @@
 =======
 - Performance improvement for flex access/egress searches [#3661](https://github.com/opentripplanner/OpenTripPlanner/pull/3661)
 - Add new routing errors for cases where all itineraries were filtered by post-processing [#3628](https://github.com/opentripplanner/OpenTripPlanner/pull/3628)
->>>>>>> dev-2.x
+- Fix combination of flex access and constrained transfer [#3726](https://github.com/opentripplanner/OpenTripPlanner/pull/3726)
 [](AUTOMATIC_CHANGELOG_PLACEHOLDER_DO_NOT_REMOVE)
 
 ## 2.0.0 (2020-11-27)

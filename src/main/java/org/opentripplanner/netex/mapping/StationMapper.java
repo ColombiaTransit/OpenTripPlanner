@@ -29,7 +29,11 @@ class StationMapper {
     );
 
     if (station.getCoordinate() == null) {
-      LOG.warn("Station {} does not contain any coordinates.", station.getId());
+      issueStore.add(
+              "StationWithoutCoordinates",
+              "Station %s does not contain any coordinates.",
+              station.getId()
+      );
     }
     return station;
   }

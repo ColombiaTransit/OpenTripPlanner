@@ -224,8 +224,12 @@ class StopTimesMapper {
         String flexibleStopPlaceId = flexibleStopPlaceIdByStopPointRef.lookup(stopPointRef);
 
         if (stopId == null && flexibleStopPlaceId == null) {
-            LOG.warn("No passengerStopAssignment found for " + stopPointRef);
-            return null;
+            issueStore.add(
+                    "PassengerStopAssignmentNotFound",
+                    "No passengerStopAssignment found for %s",
+                    stopPointRef
+            );
+            return null;            
         }
 
         StopLocation stopLocation;

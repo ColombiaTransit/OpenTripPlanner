@@ -205,7 +205,7 @@ class StopTimesMapper {
         }
 
         if (passingTime.getArrivalTime() == null && passingTime.getDepartureTime() == null) {
-            issueStore.add("TripWithoutTime","Time missing for trip %s", trip.getId());
+            issueStore.add("TripWithoutTime","Time missing for trip %i", trip.getId());
         }
 
         if (currentHeadSign != null) {
@@ -224,11 +224,7 @@ class StopTimesMapper {
         String flexibleStopPlaceId = flexibleStopPlaceIdByStopPointRef.lookup(stopPointRef);
 
         if (stopId == null && flexibleStopPlaceId == null) {
-            issueStore.add(
-                    "PassengerStopAssignmentNotFound",
-                    "No passengerStopAssignment found for %s",
-                    stopPointRef
-            );
+            LOG.warn("No passengerStopAssignment found for " + stopPointRef);
             return null;
         }
 

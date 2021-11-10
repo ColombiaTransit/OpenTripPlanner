@@ -32,7 +32,7 @@ class StationMapper {
     if (station.getCoordinate() == null) {
       issueStore.add(
               "StationWithoutCoordinates",
-              "Station %s does not contain any coordinates.",
+              "Station %i does not contain any coordinates.",
               station.getId()
       );
     }

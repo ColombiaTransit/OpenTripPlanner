@@ -85,6 +85,7 @@
 - Fix combination of flex access and constrained transfer [#3726](https://github.com/opentripplanner/OpenTripPlanner/pull/3726)
 - Merge B+R and P+R functionality into vehicle parking [#3480](https://github.com/opentripplanner/OpenTripPlanner/pull/3480)
 - Remove AddMinSafeTransferCostFilter from itinerary-filter-chain [#3736](https://github.com/opentripplanner/OpenTripPlanner/pull/3736)
+- Add cost to maximize wait-time and avoid back-travel in optimize transfers [#3654](https://github.com/opentripplanner/OpenTripPlanner/pull/3654)
 [](AUTOMATIC_CHANGELOG_PLACEHOLDER_DO_NOT_REMOVE)
 
 ## 2.0.0 (2020-11-27)

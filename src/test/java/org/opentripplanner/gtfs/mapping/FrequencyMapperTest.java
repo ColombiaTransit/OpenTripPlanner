@@ -13,6 +13,15 @@ import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Frequency;
 import org.onebusaway.gtfs.model.Trip;
 
+import java.util.Collection;
+import java.util.Collections;
+import org.opentripplanner.graph_builder.DataImportIssueStore;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 public class FrequencyMapperTest {
     private static final String FEED_ID = "FEED";
 
@@ -46,9 +55,9 @@ public class FrequencyMapperTest {
         FREQUENCY.setTrip(TRIP);
     }
 
-    private final FrequencyMapper subject = new FrequencyMapper(
-            new TripMapper(new RouteMapper(new AgencyMapper(FEED_ID)))
-    );
+    private FrequencyMapper subject = new FrequencyMapper(
+            new TripMapper(
+                    new RouteMapper(new AgencyMapper(FEED_ID), new DataImportIssueStore(false))));
 
     @Test
     public void testMapCollection() throws Exception {

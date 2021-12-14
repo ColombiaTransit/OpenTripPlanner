@@ -89,7 +89,7 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
     }
 
     /**
-     * Convinience method to get the route traverse mode, the mode for all trips in this pattern.
+     * Convenience method to get the route traverse mode, the mode for all trips in this pattern.
      */
     public final TransitMode getMode() {
         return route.getMode();
@@ -181,7 +181,7 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
         scheduledTimetable.finish();
     }
 
-    public Stop getStop(int stopIndex) {
+    public StopLocation getStop(int stopIndex) {
         return stopPattern.getStops()[stopIndex];
     }
 
@@ -190,7 +190,7 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
         return Arrays.asList(stopPattern.getStops()).indexOf(stop);
     }
 
-    public List<Stop> getStops() {
+    public List<StopLocation> getStops() {
         return Arrays.asList(stopPattern.getStops());
     }
 
@@ -215,11 +215,6 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
     /** Returns whether a given stop is wheelchair-accessible. */
     public boolean wheelchairAccessible(int stopIndex) {
         return stopPattern.getStop(stopIndex).getWheelchairBoarding() == WheelChairBoarding.POSSIBLE;
-    }
-
-    /** Returns the zone of a given stop */
-    public String getZone(int stopIndex) {
-        return getStop(stopIndex).getFirstZoneAsString();
     }
 
     public PickDrop getAlightType(int stopIndex) {
@@ -329,7 +324,7 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
         createdByRealtimeUpdater = true;
     }
 
-    private static String stopNameAndId (Stop stop) {
+    private static String stopNameAndId (StopLocation stop) {
         return stop.getName() + " (" + stop.getId().toString() + ")";
     }
 
@@ -411,24 +406,24 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
 
             /* Do the patterns within this Route have a unique start, end, or via Stop? */
             Multimap<String, TripPattern> signs   = ArrayListMultimap.create(); // prefer headsigns
-            Multimap<Stop, TripPattern> starts  = ArrayListMultimap.create();
-            Multimap<Stop, TripPattern> ends    = ArrayListMultimap.create();
-            Multimap<Stop, TripPattern> vias    = ArrayListMultimap.create();
+            Multimap<StopLocation, TripPattern> starts  = ArrayListMultimap.create();
+            Multimap<StopLocation, TripPattern> ends    = ArrayListMultimap.create();
+            Multimap<StopLocation, TripPattern> vias    = ArrayListMultimap.create();
 
             for (TripPattern pattern : routeTripPatterns) {
-                List<Stop> stops = pattern.getStops();
-                Stop start = stops.get(0);
-                Stop end   = stops.get(stops.size() - 1);
+                List<StopLocation> stops = pattern.getStops();
+                StopLocation start = stops.get(0);
+                StopLocation end   = stops.get(stops.size() - 1);
                 starts.put(start, pattern);
                 ends.put(end, pattern);
-                for (Stop stop : stops) vias.put(stop, pattern);
+                for (StopLocation stop : stops) vias.put(stop, pattern);
             }
             PATTERN : for (TripPattern pattern : routeTripPatterns) {
-                List<Stop> stops = pattern.getStops();
+                List<StopLocation> stops = pattern.getStops();
                 StringBuilder sb = new StringBuilder(routeName);
 
                 /* First try to name with destination. */
-                Stop end = stops.get(stops.size() - 1);
+                var end = stops.get(stops.size() - 1);
                 sb.append(" to " + stopNameAndId(end));
                 if (ends.get(end).size() == 1) {
                     pattern.setName(sb.toString());
@@ -436,7 +431,7 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
                 }
 
                 /* Then try to name with origin. */
-                Stop start = stops.get(0);
+                var start = stops.get(0);
                 sb.append(" from " + stopNameAndId(start));
                 if (starts.get(start).size() == 1) {
                     pattern.setName((sb.toString()));
@@ -453,7 +448,7 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
                 }
 
                 /* Still not unique; try (end, start, via) for each via. */
-                for (Stop via : stops) {
+                for (var via : stops) {
                     if (via.equals(start) || via.equals(end)) continue;
                     Set<TripPattern> intersection = new HashSet<>();
                     intersection.addAll(remainingPatterns);
@@ -589,7 +584,7 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
         return route.getId().getFeedId();
     }
 
-    private static Coordinate coordinate(Stop s) {
+    private static Coordinate coordinate(StopLocation s) {
         return new Coordinate(s.getLon(), s.getLat());
     }
 }

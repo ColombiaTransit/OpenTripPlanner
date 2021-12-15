@@ -35,7 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Build and Test
-        run: mvn --batch-mode --update-snapshots verify --DskipTests
+        run: mvn --batch-mode --update-snapshots verify
       - name: Deploy to Github Package Registry
         if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev-1.x' || github.ref == 'refs/heads/dev-2.x')
         env:

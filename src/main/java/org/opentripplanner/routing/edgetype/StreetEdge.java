@@ -46,6 +46,8 @@ public class StreetEdge extends Edge implements BikeWalkableEdge, Cloneable, Car
 
     private static Logger LOG = LoggerFactory.getLogger(StreetEdge.class);
 
+    private StreetEdgeCostExtension costExtension;
+
     private static final long serialVersionUID = 1L;
 
     /* TODO combine these with OSM highway= flags? */
@@ -325,7 +327,7 @@ public class StreetEdge extends Edge implements BikeWalkableEdge, Cloneable, Car
 
         // Automobiles have variable speeds depending on the edge type
         double speed = calculateSpeed(options, traverseMode, walkingBike);
-        
+
         double time;
         double weight;
         // TODO(flamholz): factor out this bike, wheelchair and walking specific logic to somewhere central.
@@ -432,11 +434,11 @@ public class StreetEdge extends Edge implements BikeWalkableEdge, Cloneable, Car
 
                 realTurnCost = options.getIntersectionTraversalCostModel().computeTraversalCost(
                         traversedVertex, backPSE, this, traverseMode, options, (float) backSpeed,
-                        (float) speed);                
+                        (float) speed);
             } else {
                 // In case this is a temporary edge not connected to an IntersectionVertex
                 LOG.debug("Not computing turn cost for edge {}", this);
-                realTurnCost = 0; 
+                realTurnCost = 0;
             }
 
             if (!traverseMode.isDriving()) {
@@ -452,8 +454,12 @@ public class StreetEdge extends Edge implements BikeWalkableEdge, Cloneable, Car
             s1.incrementWalkDistance(getEffectiveBikeDistance());
         }
 
+        if (costExtension != null) {
+           weight += costExtension.calculateExtraCost(options, length_mm, traverseMode);
+        }
+
         s1.incrementTimeInSeconds(roundedTime);
-        
+
         s1.incrementWeight(weight);
 
         return s1;
@@ -753,6 +759,10 @@ public class StreetEdge extends Edge implements BikeWalkableEdge, Cloneable, Car
 
     protected List<TurnRestriction> getTurnRestrictions(Graph graph) {
         return graph.getTurnRestrictions(this);
+    }
+
+    public void setCostExtension(StreetEdgeCostExtension costExtension) {
+        this.costExtension = costExtension;
     }
 
     /** calculate the length of this street segement from its geometry */

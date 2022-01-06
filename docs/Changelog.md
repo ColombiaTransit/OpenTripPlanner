@@ -108,6 +108,7 @@
 - Remove build parameter 'useTransfersTxt' [#3791](https://github.com/opentripplanner/OpenTripPlanner/pull/3791)
 - Add cursor-based paging [#3759](https://github.com/opentripplanner/OpenTripPlanner/pull/3759)
 - Data overlay sandbox feature [#3760](https://github.com/opentripplanner/OpenTripPlanner/pull/3760)
+- Run automatic performance tests [#3783](https://github.com/opentripplanner/OpenTripPlanner/pull/3783)
 [](AUTOMATIC_CHANGELOG_PLACEHOLDER_DO_NOT_REMOVE)
 
 ## 2.0.0 (2020-11-27)

@@ -37,11 +37,13 @@ class RaptorRoutingRequestTransitDataCreator {
   }
 
   List<List<TripPatternForDates>> createTripPatternsPerStop(
+      int additionalPastSearchDays,
       int additionalFutureSearchDays,
       TransitDataProviderFilter filter
   ) {
 
     List<TripPatternForDate> tripPatternForDates = getTripPatternsForDateRange(
+        additionalPastSearchDays,
         additionalFutureSearchDays,
         filter
     );
@@ -52,13 +54,14 @@ class RaptorRoutingRequestTransitDataCreator {
   }
 
   private List<TripPatternForDate> getTripPatternsForDateRange(
+      int additionalPastSearchDays,
       int additionalFutureSearchDays,
       TransitDataProviderFilter filter
   ) {
     List<TripPatternForDate> tripPatternForDates = new ArrayList<>();
 
     // This filters trips by the search date as well as additional dates before and after
-    for (int d = 0; d <= additionalFutureSearchDays; ++d) {
+    for (int d = -additionalPastSearchDays; d <= additionalFutureSearchDays; ++d) {
       tripPatternForDates.addAll(
         filterActiveTripPatterns(
           transitLayer,

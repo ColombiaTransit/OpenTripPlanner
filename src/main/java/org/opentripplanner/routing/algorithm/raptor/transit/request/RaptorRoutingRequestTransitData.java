@@ -11,6 +11,7 @@ import org.opentripplanner.routing.algorithm.raptor.transit.RaptorTransferIndex;
 import org.opentripplanner.routing.algorithm.raptor.transit.TransitLayer;
 import org.opentripplanner.routing.algorithm.raptor.transit.TripSchedule;
 import org.opentripplanner.routing.algorithm.raptor.transit.cost.DefaultCostCalculator;
+import org.opentripplanner.routing.algorithm.raptor.transit.mappers.DateMapper;
 import org.opentripplanner.routing.algorithm.raptor.transit.mappers.McCostParamsMapper;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.transit.raptor.api.transit.CostCalculator;
@@ -49,6 +50,9 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
 
   private final CostCalculator generalizedCostCalculator;
 
+  private final int validTransitDataStartTime;
+
+  private final int validTransitDataEndTime;
 
   public RaptorRoutingRequestTransitData(
       TransferService transferService,
@@ -71,6 +75,7 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
             transitLayer, searchStartTime
     );
     this.activeTripPatternsPerStop = transitDataCreator.createTripPatternsPerStop(
+        additionalPastSearchDays,
         additionalFutureSearchDays,
         filter
     );
@@ -78,6 +83,15 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
     this.generalizedCostCalculator = new DefaultCostCalculator(
             McCostParamsMapper.map(routingRequest),
             transitLayer.getStopIndex().stopBoardAlightCosts
+    );
+    this.validTransitDataStartTime = DateMapper.secondsSinceStartOfTime(
+        startOfTime,
+        startOfTime.minusDays(additionalPastSearchDays).toInstant()
+    );
+    // The +1 is due to the validity being to the end of the day
+    this.validTransitDataEndTime = DateMapper.secondsSinceStartOfTime(
+        startOfTime,
+        startOfTime.plusDays(additionalFutureSearchDays + 1).toInstant()
     );
   }
 
@@ -150,7 +164,4 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
     return validTransitDataEndTime;
   }
 
-  public ZonedDateTime getStartOfTime() {
-    return startOfTime;
-  }
 }

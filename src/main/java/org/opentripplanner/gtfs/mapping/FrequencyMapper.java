@@ -37,7 +37,7 @@ class FrequencyMapper {
         lhs.setStartTime(rhs.getStartTime());
         lhs.setEndTime(rhs.getEndTime());
         lhs.setHeadwaySecs(rhs.getHeadwaySecs());
-        lhs.setExactHeadway(rhs.getExactTimes() == EXACT_TIMES_SCHEDULE_BASED_TRIP);
+        lhs.setExactTimes(rhs.getExactTimes() == EXACT_TIMES_SCHEDULE_BASED_TRIP);
         lhs.setLabelOnly(rhs.getLabelOnly());
         return lhs;
     }

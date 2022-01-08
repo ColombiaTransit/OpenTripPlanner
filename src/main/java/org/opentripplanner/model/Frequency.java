@@ -53,6 +53,15 @@ public final class Frequency implements Serializable {
     public void setHeadwaySecs(int headwaySecs) {
         this.headwaySecs = headwaySecs;
     }
+    
+    /** This return {@code true} if the trip run on a exact same headway throughout the day. */
+    public boolean isExactHeadway() {
+        return exactHeadway;
+    }
+
+    public void setExactHeadway(boolean exactHeadway) {
+        this.exactHeadway = exactHeadway;
+    }
 
     public int getExactTimes() {
         return exactTimes;

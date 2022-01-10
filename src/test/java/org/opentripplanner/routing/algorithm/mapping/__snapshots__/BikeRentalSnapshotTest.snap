@@ -857,6 +857,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "17"
@@ -866,7 +867,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -1597,6 +1597,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "20"
@@ -1606,7 +1607,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
               "shortName": "20",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r020.htm"
             },
             "serviceId": {
@@ -2300,6 +2300,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "77"
@@ -2309,7 +2310,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
               "shortName": "77",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r077.htm"
             },
             "serviceId": {
@@ -3285,6 +3285,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "17"
@@ -3294,7 +3295,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -4270,6 +4270,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "17"
@@ -4279,7 +4280,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -4922,6 +4922,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "77"
@@ -4931,7 +4932,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.accessBikeR
               "shortName": "77",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r077.htm"
             },
             "serviceId": {
@@ -6859,6 +6859,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "17"
@@ -6868,7 +6869,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -7989,6 +7989,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "20"
@@ -7998,7 +7999,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
               "shortName": "20",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r020.htm"
             },
             "serviceId": {
@@ -8726,6 +8726,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "77"
@@ -8735,7 +8736,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
               "shortName": "77",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r077.htm"
             },
             "serviceId": {
@@ -9466,6 +9466,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "17"
@@ -9475,7 +9476,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
               "shortName": "17",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r017.htm"
             },
             "serviceId": {
@@ -10596,6 +10596,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "20"
@@ -10605,7 +10606,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
               "shortName": "20",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r020.htm"
             },
             "serviceId": {
@@ -11333,6 +11333,7 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
                 "url": "http://trimet.org"
               },
               "bikesAllowed": "UNKNOWN",
+              "gtfsType": 3,
               "id": {
                 "feedId": "prt",
                 "id": "77"
@@ -11342,7 +11343,6 @@ org.opentripplanner.routing.algorithm.mapping.BikeRentalSnapshotTest.egressBikeR
               "shortName": "77",
               "sortOrder": -999,
               "sortOrderSet": false,
-              "type": 3,
               "url": "http://trimet.org/schedules/r077.htm"
             },
             "serviceId": {

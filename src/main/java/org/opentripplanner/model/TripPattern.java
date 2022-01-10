@@ -95,6 +95,10 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
         return route.getMode();
     }
 
+    public final String getNetexSubmode() {
+        return route.getNetexSubmode();
+    }
+
     public LineString getHopGeometry(int stopIndex) {
         if (hopGeometries != null) {
             return CompactLineString.uncompactLineString(
@@ -531,6 +535,12 @@ public class TripPattern extends TransitEntity implements Cloneable, Serializabl
         return tripPatterns.stream()
             .map(TransitEntity::getId)
             .allMatch(t -> t != null && seen.add(t));
+    }
+
+    public boolean matchesModeOrSubMode(TransitMode mode, String transportSubmode) {
+        return getMode().equals(mode) || (
+                getNetexSubmode() != null && getNetexSubmode().equals(transportSubmode)
+        );
     }
 
     public String toString () {

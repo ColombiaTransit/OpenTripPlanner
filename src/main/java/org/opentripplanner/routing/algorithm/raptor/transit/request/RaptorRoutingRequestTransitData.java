@@ -154,12 +154,12 @@ public class RaptorRoutingRequestTransitData implements RaptorTransitDataProvide
     };
   }
 
-  @Override
+  
   public int getValidTransitDataStartTime() {
     return validTransitDataStartTime;
   }
 
-  @Override
+  
   public int getValidTransitDataEndTime() {
     return validTransitDataEndTime;
   }

@@ -1,9 +1,10 @@
 /* This file is based on code copied from project OneBusAway, see the LICENSE file for further information. */
 package org.opentripplanner.model;
 
+import org.opentripplanner.util.time.TimeUtils;
+
 import java.io.Serializable;
 import java.util.Objects;
-import org.opentripplanner.model.base.ToStringBuilder;
 
 public final class Frequency implements Serializable {
 
@@ -17,6 +18,8 @@ public final class Frequency implements Serializable {
 
     private int headwaySecs;
 
+    private int exactTimes = 0;
+    
     private boolean exactHeadway;
 
     private int labelOnly = 0;
@@ -52,7 +55,7 @@ public final class Frequency implements Serializable {
     public void setHeadwaySecs(int headwaySecs) {
         this.headwaySecs = headwaySecs;
     }
-
+    
     /** This return {@code true} if the trip run on a exact same headway throughout the day. */
     public boolean isExactHeadway() {
         return exactHeadway;
@@ -60,6 +63,14 @@ public final class Frequency implements Serializable {
 
     public void setExactHeadway(boolean exactHeadway) {
         this.exactHeadway = exactHeadway;
+    }
+
+    public int getExactTimes() {
+        return exactTimes;
+    }
+
+    public void setExactTimes(int exactTimes) {
+        this.exactTimes = exactTimes;
     }
 
     public int getLabelOnly() {
@@ -89,12 +100,9 @@ public final class Frequency implements Serializable {
     }
 
     public String toString() {
-      return ToStringBuilder.of(Frequency.class)
-            .addEntityId("trip", trip)
-              .addServiceTime("start", startTime, -1)
-              .addServiceTime("end", endTime, -1)
-              .addDurationSec("headway", headwaySecs)
-              .addBool("exactHeadway", exactHeadway)
-              .toString();
+      return "<Frequency trip=" + trip.getId()
+                + " start=" + TimeUtils.timeToStrLong(startTime)
+                + " end=" + TimeUtils.timeToStrLong(endTime)
+                + ">";
     }
 }

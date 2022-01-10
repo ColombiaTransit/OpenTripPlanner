@@ -88,11 +88,19 @@ public final class Route extends TransitEntity {
     public void setDesc(String desc) {
         this.desc = desc;
     }
-
+    
+    public Integer getType() {
+        return gtfsType;
+    }
+    
     public Integer getGtfsType() {
         return gtfsType;
     }
-
+    
+    public void setType(int gtfsType) {
+        this.gtfsType = gtfsType;
+    }
+    
     public void setGtfsType(int gtfsType) {
         this.gtfsType = gtfsType;
     }

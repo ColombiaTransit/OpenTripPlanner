@@ -136,7 +136,12 @@ public class GenerateTripPatternsOperation {
         if (frequencies != null && !(frequencies.isEmpty())) {
             for (Frequency freq : frequencies) {
                 tripPattern.add(new FrequencyEntry(freq, tripTimes));
-                freqCount++;
+                int timeShift = timeShiftForFrequencyBasedTrip(tripTimes, freq);
+                while (timeShift < freq.getEndTime()) {
+                    tripPattern.add(new TripTimes(tripTimes, freq, timeShift));
+                    timeShift += freq.getHeadwaySecs();
+                }
+                freqCount++;                
             }
             // TODO replace: createGeometry(graph, trip, stopTimes, hops);
         }

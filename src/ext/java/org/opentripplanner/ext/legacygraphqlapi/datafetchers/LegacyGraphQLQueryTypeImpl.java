@@ -848,7 +848,7 @@ public class LegacyGraphQLQueryTypeImpl
   public DataFetcher<DataFetcherResult<RoutingResponse>> plan() {
     return environment -> {
       LegacyGraphQLRequestContext context = environment.<LegacyGraphQLRequestContext>getContext();
-      RoutingRequest request = context.getRouter().defaultRoutingRequest.clone();
+      RoutingRequest request = context.getRouter().copyDefaultRoutingRequest();
 
       CallerWithEnvironment callWith = new CallerWithEnvironment(environment);
 
@@ -907,7 +907,7 @@ public class LegacyGraphQLQueryTypeImpl
       callWith.argument("bikeBoardCost", request::setBikeBoardCost);
       callWith.argument("banned.routes", request::setBannedRoutesFromSting);
       callWith.argument("banned.agencies", request::setBannedAgenciesFromSting);
-      // callWith.argument("banned.trips", (String v) -> request.bannedTrips = RoutingResource.makeBannedTripMap(v));
+      callWith.argument("banned.trips", request::setBannedTripsFromString);
       // callWith.argument("banned.stops", request::setBannedStops);
       // callWith.argument("banned.stopsHard", request::setBannedStopsHard);
       callWith.argument("transferPenalty", (Integer v) -> request.transferCost = v);

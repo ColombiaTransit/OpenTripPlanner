@@ -83,7 +83,6 @@ public final class TripPattern extends TransitEntity implements Cloneable, Seria
     // TODO MOVE codes INTO Timetable or TripTimes
     private BitSet services;
 
-
     public TripPattern(FeedScopedId id, Route route, StopPattern stopPattern) {
         super(id);
         this.route = route;
@@ -113,7 +112,7 @@ public final class TripPattern extends TransitEntity implements Cloneable, Seria
         return route.getMode();
     }
 
-    public final String getNetexSubmode() {
+    public String getNetexSubmode() {
         return route.getNetexSubmode();
     }
 
@@ -621,11 +620,10 @@ public final class TripPattern extends TransitEntity implements Cloneable, Seria
         });
         scheduledTimetable.setServiceCodes (serviceCodes);
     }
-
     /**
      * A set of serviceIds with at least one trip in this pattern.
      * Trips in a pattern are no longer necessarily running on the same service ID.
-     */ /**
+     *
      * @return bitset of service codes
      */
     public BitSet getServices() {

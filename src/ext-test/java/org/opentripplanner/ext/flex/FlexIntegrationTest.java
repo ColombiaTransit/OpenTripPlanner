@@ -8,6 +8,7 @@ import static org.opentripplanner.routing.api.request.StreetMode.FLEXIBLE;
 import static org.opentripplanner.routing.core.TraverseMode.BUS;
 import static org.opentripplanner.routing.core.TraverseMode.WALK;
 
+import io.micrometer.core.instrument.Metrics;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -58,7 +59,7 @@ public class FlexIntegrationTest {
 
         graph = ConstantsForTests.buildOsmGraph(osmPath);
         addGtfsToGraph(graph, List.of(cobblincGtfsPath, martaGtfsPath, flexGtfsPath));
-        router = new Router(graph, RouterConfig.DEFAULT);
+        router = new Router(graph, RouterConfig.DEFAULT, Metrics.globalRegistry);
         router.startup();
 
         service = new RoutingService(graph);
@@ -169,7 +170,7 @@ public class FlexIntegrationTest {
         var req = new RoutingRequest();
 
         // we don't have a complete coverage of the entire area so use straight lines for transfers
-        var transfers = new DirectTransferGenerator(600, List.of(req));
+        var transfers = new DirectTransferGenerator(Duration.ofMinutes(10), List.of(req));
         transfers.buildGraph(graph, extra);
 
         graph.index();

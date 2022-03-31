@@ -1,5 +1,15 @@
 package org.opentripplanner.graph_builder.module.osm;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -14,14 +24,12 @@ import org.opentripplanner.common.model.P2;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.graph_builder.issues.AreaTooComplicated;
 import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule.Handler;
-import org.opentripplanner.graph_builder.services.StreetEdgeFactory;
 import org.opentripplanner.openstreetmap.model.OSMNode;
 import org.opentripplanner.openstreetmap.model.OSMRelation;
 import org.opentripplanner.openstreetmap.model.OSMRelationMember;
 import org.opentripplanner.openstreetmap.model.OSMWithTags;
-import org.opentripplanner.routing.algorithm.astar.AStar;
+import org.opentripplanner.routing.algorithm.astar.AStarBuilder;
 import org.opentripplanner.routing.algorithm.astar.strategies.SkipEdgeStrategy;
-import org.opentripplanner.routing.algorithm.astar.strategies.TrivialRemainingWeightHeuristic;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
@@ -41,17 +49,6 @@ import org.opentripplanner.routing.vertextype.OsmVertex;
 import org.opentripplanner.util.I18NString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Theoretically, it is not correct to build the visibility graph on the joined polygon of areas
@@ -88,8 +85,6 @@ public class WalkableAreaBuilder {
 
     private final Map<OSMWithTags, WayProperties> wayPropertiesCache = new HashMap<>();
 
-    private final StreetEdgeFactory edgeFactory;
-
     // This is an awful hack, but this class (WalkableAreaBuilder) ought to be rewritten.
     private final Handler handler;
 
@@ -100,13 +95,12 @@ public class WalkableAreaBuilder {
     private final List<OsmVertex> platformLinkingEndpoints;
 
     public WalkableAreaBuilder(Graph graph, OSMDatabase osmdb, WayPropertySet wayPropertySet,
-            StreetEdgeFactory edgeFactory, Handler handler, DataImportIssueStore issueStore,
+            Handler handler, DataImportIssueStore issueStore,
             int maxAreaNodes, boolean platformEntriesLinking
     ) {
         this.graph = graph;
         this.osmdb = osmdb;
         this.wayPropertySet = wayPropertySet;
-        this.edgeFactory = edgeFactory;
         this.handler = handler;
         this.issueStore = issueStore;
         this.maxAreaNodes = maxAreaNodes;
@@ -339,22 +333,10 @@ public class WalkableAreaBuilder {
         pruneAreaEdges(startingVertices, edges, ringEdges);
     }
 
-    static class ListedEdgesOnly implements SkipEdgeStrategy {
-        private final Set<Edge> edges;
-
-        public ListedEdgesOnly(Set<Edge> edges) {
-            this.edges = edges;
-        }
+    record ListedEdgesOnly(Set<Edge> edges) implements SkipEdgeStrategy {
 
         @Override
-        public boolean shouldSkipEdge(
-            Set<Vertex> origins,
-            Set<Vertex> targets,
-            State current,
-            Edge edge,
-            ShortestPathTree spt,
-            RoutingRequest traverseOptions
-        ) {
+        public boolean shouldSkipEdge(State current, Edge edge) {
             return !edges.contains(edge);
         }
     }
@@ -381,14 +363,14 @@ public class WalkableAreaBuilder {
         }
         RoutingRequest options = new RoutingRequest(mode);
         options.dominanceFunction = new DominanceFunction.EarliestArrival();
-        options.setDummyRoutingContext(graph);
-        AStar search = new AStar();
-        search.setSkipEdgeStrategy(new ListedEdgesOnly(edges));
         Set<Edge> usedEdges = new HashSet<>();
         for (Vertex vertex : startingVertices) {
             options.setRoutingContext(graph, vertex, null);
-            options.rctx.remainingWeightHeuristic = new TrivialRemainingWeightHeuristic();
-            ShortestPathTree spt = search.getShortestPathTree(options);
+            ShortestPathTree spt = AStarBuilder
+                    .allDirections(new ListedEdgesOnly(edges))
+                    .setRoutingRequest(options)
+                    .getShortestPathTree();
+
             for (Vertex endVertex : startingVertices) {
                 GraphPath path = spt.getPath(endVertex);
                 if (path != null) {
@@ -466,7 +448,7 @@ public class WalkableAreaBuilder {
                     + " to " + endEndpoint.getLabel();
             I18NString name = handler.getNameForWay(areaEntity, label);
 
-            AreaEdge street = edgeFactory.createAreaEdge(startEndpoint, endEndpoint, line, name,
+            AreaEdge street = new AreaEdge(startEndpoint, endEndpoint, line, name,
                     length, areaPermissions, false, edgeList);
             street.setCarSpeed(carSpeed);
 
@@ -484,8 +466,8 @@ public class WalkableAreaBuilder {
                     + startEndpoint.getLabel();
             name = handler.getNameForWay(areaEntity, label);
 
-            AreaEdge backStreet = edgeFactory.createAreaEdge(endEndpoint, startEndpoint,
-                    (LineString) line.reverse(), name, length, areaPermissions, true, edgeList);
+            AreaEdge backStreet = new AreaEdge(endEndpoint, startEndpoint,
+                    line.reverse(), name, length, areaPermissions, true, edgeList);
             backStreet.setCarSpeed(carSpeed);
 
             if (!areaEntity.hasTag("name") && !areaEntity.hasTag("ref")) {

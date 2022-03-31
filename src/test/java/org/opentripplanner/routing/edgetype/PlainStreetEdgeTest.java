@@ -32,7 +32,6 @@ public class PlainStreetEdgeTest {
         v2 = vertex("maple_2nd", 1.0, 2.0);
         
         proto = new RoutingRequest();
-        proto.setDummyRoutingContext(graph);
         proto.carSpeed = 15.0f;
         proto.walkSpeed = 1.0;
         proto.bikeSpeed = 5.0f;
@@ -259,7 +258,9 @@ public class PlainStreetEdgeTest {
     public void testTurnRestriction() {
         StreetEdge e0 = edge(v0, v1, 50.0, StreetTraversalPermission.ALL);
         StreetEdge e1 = edge(v1, v2, 18.4, StreetTraversalPermission.ALL);
-        State state = new State(v2, 0, proto.clone());
+        RoutingRequest routingRequest = proto.clone();
+        routingRequest.setRoutingContext(graph, v0, v2);
+        State state = new State(v2, 0, routingRequest);
 
         state.getOptions().setArriveBy(true);
         e1.addTurnRestriction(new TurnRestriction(e1, e0, null, TraverseModeSet.allModes(), null));
@@ -303,7 +304,7 @@ public class PlainStreetEdgeTest {
         return new StreetEdge(vA, vB, geom, name, length, perm, false);
     }
 
-    private StreetWithElevationEdge edge(
+    private StreetEdge edge(
             StreetVertex vA,
             StreetVertex vB,
             double length,
@@ -318,8 +319,8 @@ public class PlainStreetEdgeTest {
         coords[1] = vB.getCoordinate();
         LineString geom = GeometryUtils.getGeometryFactory().createLineString(coords);
 
-        var edge = new StreetWithElevationEdge(vA, vB, geom, name, length, perm, false);
-        edge.setElevationProfile(elevationProfile, false);
+        var edge = new StreetEdge(vA, vB, geom, name, length, perm, false);
+        StreetElevationExtension.addToEdge(edge, elevationProfile, false);
         return edge;
     }
 }

@@ -64,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
            name: ct-otp
-           path: target/*.jar
+           path: target/*-shaded.jar
 
   container-image:
     if: github.repository_owner == 'opentripplanner' && github.event_name == 'push' && github.ref == 'refs/heads/dev-2.x'

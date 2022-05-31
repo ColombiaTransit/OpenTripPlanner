@@ -6,8 +6,10 @@ import java.util.Comparator;
 import java.util.List;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.core.ServiceDay;
+import org.opentripplanner.routing.trippattern.OccupancyStatus;
 import org.opentripplanner.routing.trippattern.RealTimeState;
 import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.transit.model.timetable.Trip;
 
 /**
  * Represents a Trip at a specific stop index and on a specific service day. This is a read-only
@@ -165,7 +167,7 @@ public class TripTimeOnDate {
     return (
       isCancelledStop() ||
       tripTimes.isCanceled() ||
-      tripTimes.getTrip().getTripAlteration().isCanceledOrReplaced()
+      tripTimes.getTrip().getNetexAlteration().isCanceledOrReplaced()
     );
   }
 
@@ -173,6 +175,10 @@ public class TripTimeOnDate {
     return tripTimes.isNoDataStop(stopIndex)
       ? RealTimeState.SCHEDULED
       : tripTimes.getRealTimeState();
+  }
+
+  public OccupancyStatus getOccupancyStatus() {
+    return tripTimes.getOccupancyStatus(stopIndex);
   }
 
   public long getServiceDayMidnight() {
@@ -188,7 +194,7 @@ public class TripTimeOnDate {
   }
 
   public String getBlockId() {
-    return tripTimes.getTrip().getBlockId();
+    return tripTimes.getTrip().getGtfsBlockId();
   }
 
   public String getHeadsign() {

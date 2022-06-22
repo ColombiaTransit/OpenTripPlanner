@@ -10,11 +10,10 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.opentripplanner.common.model.T2;
 import org.opentripplanner.ext.vectortiles.PropertyMapper;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.Timetable;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.vertextype.TransitStopVertex;
+import org.opentripplanner.transit.model.site.Stop;
 
 public class DigitransitStopPropertyMapper extends PropertyMapper<TransitStopVertex> {
 
@@ -57,14 +56,14 @@ public class DigitransitStopPropertyMapper extends PropertyMapper<TransitStopVer
         })
         .collect(Collectors.toList())
     );
-
+    String desc = stop.getDescription() != null ? stop.getDescription().toString() : null;
     return List.of(
       new T2<>("gtfsId", stop.getId().toString()),
       // Name is I18NString now, we return default name
       new T2<>("name", stop.getName().toString()),
       new T2<>("code", stop.getCode()),
       new T2<>("platform", stop.getPlatformCode()),
-      new T2<>("desc", stop.getDescription()),
+      new T2<>("desc", desc),
       new T2<>(
         "parentStation",
         stop.getParentStation() != null ? stop.getParentStation().getId() : "null"

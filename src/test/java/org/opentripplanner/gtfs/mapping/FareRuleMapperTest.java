@@ -1,18 +1,17 @@
 package org.opentripplanner.gtfs.mapping;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.FareAttribute;
 import org.onebusaway.gtfs.model.FareRule;
-import org.onebusaway.gtfs.model.Route;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
 
 public class FareRuleMapperTest {
@@ -33,22 +32,22 @@ public class FareRuleMapperTest {
 
   private static final String ORIGIN_ID = "Origin Id";
 
-  private static final Route ROUTE = new Route();
   private final FareRuleMapper subject = new FareRuleMapper(
     new RouteMapper(new AgencyMapper(FEED_ID), new DataImportIssueStore(false)),
     new FareAttributeMapper()
   );
 
   static {
+    var data = new GtfsTestData();
+
     FARE_ATTRIBUTE.setId(AGENCY_AND_ID);
-    ROUTE.setId(AGENCY_AND_ID);
 
     FARE_RULE.setId(ID);
     FARE_RULE.setContainsId(CONTAINS_ID);
     FARE_RULE.setDestinationId(DESTINATION_ID);
     FARE_RULE.setFare(FARE_ATTRIBUTE);
     FARE_RULE.setOriginId(ORIGIN_ID);
-    FARE_RULE.setRoute(ROUTE);
+    FARE_RULE.setRoute(data.route);
   }
 
   @Test

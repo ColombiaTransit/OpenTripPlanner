@@ -10,14 +10,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopPattern;
 import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.TransitMode;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternForDate;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternWithRaptorStopIndexes;
@@ -25,7 +20,8 @@ import org.opentripplanner.routing.algorithm.raptoradapter.transit.mappers.DateM
 import org.opentripplanner.routing.trippattern.Deduplicator;
 import org.opentripplanner.routing.trippattern.TripTimes;
 import org.opentripplanner.transit.model._data.TransitModelForTest;
-import org.opentripplanner.transit.model.basic.FeedScopedId;
+import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.network.TransitMode;
 
 public class RaptorRoutingRequestTransitDataCreatorTest {
 
@@ -35,14 +31,9 @@ public class RaptorRoutingRequestTransitDataCreatorTest {
 
   private static final TripPattern TP = new TripPattern(
     id("P1"),
-    new Route(id("L1")),
+    TransitModelForTest.route("1").withMode(TransitMode.BUS).build(),
     new StopPattern(List.of(createStopTime(), createStopTime()))
   );
-
-  @BeforeEach
-  public void setup() {
-    TP.getRoute().setMode(TransitMode.BUS);
-  }
 
   @Test
   public void testMergeTripPatterns() {
@@ -119,7 +110,7 @@ public class RaptorRoutingRequestTransitDataCreatorTest {
     stopTime2.setArrivalTime(7200);
 
     return new TripTimes(
-      new Trip(TransitModelForTest.id("Test")),
+      TransitModelForTest.trip("Test").build(),
       Arrays.asList(stopTime1, stopTime2),
       new Deduplicator()
     );
@@ -132,7 +123,7 @@ public class RaptorRoutingRequestTransitDataCreatorTest {
    */
   private static StopTime createStopTime() {
     var st = new StopTime();
-    st.setStop(Stop.stopForTest("Stop:1", 0.0, 0.0));
+    st.setStop(TransitModelForTest.stopForTest("Stop:1", 0.0, 0.0));
     return st;
   }
 

@@ -14,6 +14,7 @@ import java.util.BitSet;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.locationtech.jts.geom.LineString;
+import org.opentripplanner.ext.transmodelapi.mapping.GeometryMapper;
 import org.opentripplanner.ext.transmodelapi.model.EnumTypes;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
 import org.opentripplanner.model.TripPattern;
@@ -32,6 +33,7 @@ public class JourneyPatternType {
     GraphQLOutputType quayType,
     GraphQLOutputType lineType,
     GraphQLOutputType serviceJourneyType,
+    GraphQLOutputType stopToStopGeometryType,
     GraphQLNamedOutputType ptSituationElementType,
     GqlUtil gqlUtil
   ) {
@@ -128,6 +130,19 @@ public class JourneyPatternType {
       .field(
         GraphQLFieldDefinition
           .newFieldDefinition()
+          .name("stopToStopGeometries")
+          .description(
+            "Detailed path travelled by journey pattern divided into stop-to-stop sections."
+          )
+          .type(new GraphQLList(stopToStopGeometryType))
+          .dataFetcher(environment ->
+            GeometryMapper.mapStopToStopGeometries(environment.getSource())
+          )
+          .build()
+      )
+      .field(
+        GraphQLFieldDefinition
+          .newFieldDefinition()
           .name("situations")
           .description("Get all situations active for the journey pattern.")
           .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(ptSituationElementType))))
@@ -150,7 +165,7 @@ public class JourneyPatternType {
           .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(noticeType))))
           .dataFetcher(environment -> {
             TripPattern tripPattern = environment.getSource();
-            return GqlUtil.getRoutingService(environment).getNoticesByEntity(tripPattern);
+            return GqlUtil.getTransitService(environment).getNoticesByEntity(tripPattern);
           })
           .build()
       )

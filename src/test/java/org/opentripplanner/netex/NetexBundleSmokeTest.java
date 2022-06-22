@@ -1,10 +1,10 @@
 package org.opentripplanner.netex;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.Multimap;
 import java.io.Serializable;
@@ -14,27 +14,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.opentripplanner.ConstantsForTests;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
-import org.opentripplanner.model.BikeAccess;
 import org.opentripplanner.model.MultiModalStation;
 import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.OtpTransitService;
-import org.opentripplanner.model.Station;
-import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.StopTimeKey;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
-import org.opentripplanner.model.WheelchairBoarding;
 import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
 import org.opentripplanner.routing.trippattern.Deduplicator;
-import org.opentripplanner.transit.model.basic.FeedScopedId;
-import org.opentripplanner.transit.model.basic.TransitEntity;
+import org.opentripplanner.transit.model.basic.WheelchairAccessibility;
+import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.framework.TransitEntity;
+import org.opentripplanner.transit.model.network.BikeAccess;
 import org.opentripplanner.transit.model.organization.Agency;
 import org.opentripplanner.transit.model.organization.Operator;
+import org.opentripplanner.transit.model.site.Station;
+import org.opentripplanner.transit.model.site.Stop;
+import org.opentripplanner.transit.model.timetable.Trip;
 
 /**
  * Load a small NeTEx file set without failing. This is just a smoke test and should be excluded
@@ -157,10 +157,13 @@ public class NetexBundleSmokeTest {
     TripPattern p = map.get(fId("RUT:JourneyPattern:12-1"));
     assertEquals("Jernbanetorget", p.getTripHeadsign());
     assertEquals("RB", p.getFeedId());
-    assertEquals("[<Stop RB:NSR:Quay:7203>, <Stop RB:NSR:Quay:8027>]", p.getStops().toString());
     assertEquals(
-      "[<Trip RB:RUT:ServiceJourney:12-101375-1000>]",
-      p.scheduledTripsAsStream().collect(Collectors.toList()).toString()
+      "[Stop{RB:NSR:Quay:7203 N/A}, Stop{RB:NSR:Quay:8027 N/A}]",
+      p.getStops().toString()
+    );
+    assertEquals(
+      "[Trip{RB:RUT:ServiceJourney:12-101375-1000 12}]",
+      p.scheduledTripsAsStream().toList().toString()
     );
 
     // TODO OTP2 - Why?
@@ -172,13 +175,12 @@ public class NetexBundleSmokeTest {
     Map<FeedScopedId, Trip> map = trips.stream().collect(Collectors.toMap(Trip::getId, t -> t));
     Trip t = map.get(fId("RUT:ServiceJourney:12-101375-1001"));
 
-    assertEquals("Jernbanetorget", t.getTripHeadsign());
-    assertNull(t.getTripShortName());
+    assertEquals("Jernbanetorget", t.getHeadsign());
+    assertNull(t.getShortName());
     assertNotNull(t.getServiceId());
     assertEquals("Ruter", t.getOperator().getName());
-    assertEquals("Ruter", t.getTripOperator().getName());
     assertEquals(BikeAccess.UNKNOWN, t.getBikesAllowed());
-    assertEquals(WheelchairBoarding.NO_INFORMATION, t.getWheelchairBoarding());
+    assertEquals(WheelchairAccessibility.NO_INFORMATION, t.getWheelchairBoarding());
     assertEquals(4, trips.size());
   }
 
@@ -214,7 +216,9 @@ public class NetexBundleSmokeTest {
       .orElseThrow(IllegalStateException::new);
 
     List<Notice> list = list(map.get(key));
-    if (list.size() == 0) fail(
+    assertNotEquals(
+      0,
+      list.size(),
       "Notice not found: " + key + " -> <Notice " + code + ", " + text + ">\n\t" + map
     );
     Notice n = list.get(0);

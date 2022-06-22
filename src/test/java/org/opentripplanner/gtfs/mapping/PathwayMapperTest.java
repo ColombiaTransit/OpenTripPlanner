@@ -1,17 +1,18 @@
 package org.opentripplanner.gtfs.mapping;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.Collections;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.onebusaway.gtfs.model.AgencyAndId;
 import org.onebusaway.gtfs.model.Pathway;
 import org.onebusaway.gtfs.model.Stop;
+import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
 import org.opentripplanner.util.TranslationHelper;
 
 public class PathwayMapperTest {
@@ -29,11 +30,14 @@ public class PathwayMapperTest {
   private static final Stop FROM_STOP = new Stop();
 
   private static final Stop TO_STOP = new Stop();
+
+  private static final OtpTransitServiceBuilder otpTransitService = new OtpTransitServiceBuilder();
+
   private final PathwayMapper subject = new PathwayMapper(
-    new StopMapper(TRANSLATION_HELPER),
-    new EntranceMapper(TRANSLATION_HELPER),
-    new PathwayNodeMapper(TRANSLATION_HELPER),
-    new BoardingAreaMapper(TRANSLATION_HELPER)
+    new StopMapper(TRANSLATION_HELPER, stationId -> null),
+    new EntranceMapper(TRANSLATION_HELPER, stationId -> null),
+    new PathwayNodeMapper(TRANSLATION_HELPER, stationId -> null),
+    new BoardingAreaMapper(TRANSLATION_HELPER, stationId -> null)
   );
 
   static {

@@ -2,12 +2,12 @@ package org.opentripplanner.routing.algorithm.raptoradapter.transit.frequency;
 
 import java.time.LocalDate;
 import org.opentripplanner.model.TripPattern;
-import org.opentripplanner.model.WheelchairBoarding;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripSchedule;
+import org.opentripplanner.routing.algorithm.raptoradapter.transit.cost.DefaultTripSchedule;
 import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.transit.model.basic.WheelchairAccessibility;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransferConstraint;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripPattern;
-import org.opentripplanner.transit.raptor.api.transit.RaptorTripSchedule;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleBoardOrAlightEvent;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleSearch;
 
@@ -26,7 +26,7 @@ import org.opentripplanner.transit.raptor.api.transit.RaptorTripScheduleSearch;
  * save some resources. This kind of optimization is probably easier to do after a a clean up of the
  * internal OTP transit model.
  */
-abstract class FrequencyBoardOrAlightEvent<T extends RaptorTripSchedule>
+abstract class FrequencyBoardOrAlightEvent<T extends DefaultTripSchedule>
   implements RaptorTripScheduleBoardOrAlightEvent<T>, TripSchedule {
 
   protected final RaptorTripPattern raptorTripPattern;
@@ -37,7 +37,7 @@ abstract class FrequencyBoardOrAlightEvent<T extends RaptorTripSchedule>
   protected final int offset;
   protected final int headway;
   protected final LocalDate serviceDate;
-  private final WheelchairBoarding wheelChairBoarding;
+  private final WheelchairAccessibility wheelChairBoarding;
 
   public FrequencyBoardOrAlightEvent(
     RaptorTripPattern raptorTripPattern,
@@ -138,7 +138,7 @@ abstract class FrequencyBoardOrAlightEvent<T extends RaptorTripSchedule>
   }
 
   @Override
-  public WheelchairBoarding wheelchairBoarding() {
+  public WheelchairAccessibility wheelchairBoarding() {
     return wheelChairBoarding;
   }
 }

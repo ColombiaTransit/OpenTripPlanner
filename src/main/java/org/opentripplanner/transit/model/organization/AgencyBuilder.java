@@ -1,58 +1,39 @@
 package org.opentripplanner.transit.model.organization;
 
-import org.opentripplanner.transit.model.basic.FeedScopedId;
+import javax.annotation.Nonnull;
+import org.opentripplanner.transit.model.framework.AbstractEntityBuilder;
+import org.opentripplanner.transit.model.framework.FeedScopedId;
 
-public class AgencyBuilder {
-
-  private FeedScopedId id;
+public class AgencyBuilder extends AbstractEntityBuilder<Agency, AgencyBuilder> {
 
   private String name;
-
   private String timezone;
-
   private String url;
-
   private String lang;
-
   private String phone;
-
   private String fareUrl;
-
   private String brandingUrl;
 
   AgencyBuilder(FeedScopedId id) {
-    this.id = id;
+    super(id);
   }
 
-  AgencyBuilder(Agency agency) {
-    this(agency.getId());
-    this.name = agency.getName();
-    this.timezone = agency.getTimezone();
-    this.url = agency.getUrl();
-    this.lang = agency.getLang();
-    this.phone = agency.getPhone();
-    this.fareUrl = agency.getFareUrl();
-    this.brandingUrl = agency.getBrandingUrl();
-  }
-
-  public Agency build() {
-    return new Agency(this);
-  }
-
-  public FeedScopedId getId() {
-    return id;
-  }
-
-  public AgencyBuilder setId(FeedScopedId id) {
-    this.id = id;
-    return this;
+  AgencyBuilder(@Nonnull Agency original) {
+    super(original);
+    this.name = original.getName();
+    this.timezone = original.getTimezone();
+    this.url = original.getUrl();
+    this.lang = original.getLang();
+    this.phone = original.getPhone();
+    this.fareUrl = original.getFareUrl();
+    this.brandingUrl = original.getBrandingUrl();
   }
 
   public String getName() {
     return name;
   }
 
-  public AgencyBuilder setName(String name) {
+  public AgencyBuilder withName(String name) {
     this.name = name;
     return this;
   }
@@ -61,7 +42,7 @@ public class AgencyBuilder {
     return timezone;
   }
 
-  public AgencyBuilder setTimezone(String timezone) {
+  public AgencyBuilder withTimezone(String timezone) {
     this.timezone = timezone;
     return this;
   }
@@ -70,7 +51,7 @@ public class AgencyBuilder {
     return url;
   }
 
-  public AgencyBuilder setUrl(String url) {
+  public AgencyBuilder withUrl(String url) {
     this.url = url;
     return this;
   }
@@ -79,7 +60,7 @@ public class AgencyBuilder {
     return lang;
   }
 
-  public AgencyBuilder setLang(String lang) {
+  public AgencyBuilder withLang(String lang) {
     this.lang = lang;
     return this;
   }
@@ -88,7 +69,7 @@ public class AgencyBuilder {
     return phone;
   }
 
-  public AgencyBuilder setPhone(String phone) {
+  public AgencyBuilder withPhone(String phone) {
     this.phone = phone;
     return this;
   }
@@ -97,7 +78,7 @@ public class AgencyBuilder {
     return fareUrl;
   }
 
-  public AgencyBuilder setFareUrl(String fareUrl) {
+  public AgencyBuilder withFareUrl(String fareUrl) {
     this.fareUrl = fareUrl;
     return this;
   }
@@ -106,8 +87,13 @@ public class AgencyBuilder {
     return brandingUrl;
   }
 
-  public AgencyBuilder setBrandingUrl(String brandingUrl) {
+  public AgencyBuilder withBrandingUrl(String brandingUrl) {
     this.brandingUrl = brandingUrl;
     return this;
+  }
+
+  @Override
+  protected Agency buildFromValues() {
+    return new Agency(this);
   }
 }

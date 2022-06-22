@@ -22,12 +22,12 @@ import org.locationtech.jts.geom.LineString;
 import org.opentripplanner.ext.transmodelapi.model.EnumTypes;
 import org.opentripplanner.ext.transmodelapi.model.TransmodelTransportSubmode;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
-import org.opentripplanner.model.StopLocation;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.model.TripTimeOnDate;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.routing.TripTimesShortHelper;
+import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.util.PolylineEncoder;
 
 public class ServiceJourneyType {
@@ -69,7 +69,7 @@ public class ServiceJourneyType {
           .type(new GraphQLNonNull(new GraphQLList(gqlUtil.dateScalar)))
           .dataFetcher(environment ->
             GqlUtil
-              .getRoutingService(environment)
+              .getTransitService(environment)
               .getCalendarService()
               .getServiceDatesForServiceId(((trip(environment)).getServiceId()))
               .stream()
@@ -99,10 +99,9 @@ public class ServiceJourneyType {
           .newFieldDefinition()
           .name("transportSubmode")
           .type(TRANSPORT_SUBMODE)
-          .dataFetcher(environment -> {
-            final String netexSubmode = ((trip(environment))).getNetexSubmode();
-            return netexSubmode != null ? TransmodelTransportSubmode.fromValue(netexSubmode) : null;
-          })
+          .dataFetcher(environment ->
+            TransmodelTransportSubmode.fromValue(((trip(environment))).getNetexSubMode())
+          )
           .build()
       )
       .field(
@@ -113,7 +112,7 @@ public class ServiceJourneyType {
           .description(
             "Publicly announced code for service journey, differentiating it from other service journeys for the same line."
           )
-          .dataFetcher(environment -> ((trip(environment)).getTripShortName()))
+          .dataFetcher(environment -> ((trip(environment)).getShortName()))
           .build()
       )
       .field(
@@ -122,7 +121,7 @@ public class ServiceJourneyType {
           .name("privateCode")
           .type(Scalars.GraphQLString)
           .description("For internal use by operators.")
-          .dataFetcher(environment -> ((trip(environment)).getInternalPlanningCode()))
+          .dataFetcher(environment -> ((trip(environment)).getNetexInternalPlanningCode()))
           .build()
       )
       .field(
@@ -151,7 +150,7 @@ public class ServiceJourneyType {
             "DatedServiceJourney. We will create artificial DSJs for the old SJs."
           )
           .type(EnumTypes.SERVICE_ALTERATION)
-          .dataFetcher(environment -> trip(environment).getTripAlteration())
+          .dataFetcher(environment -> trip(environment).getNetexAlteration())
           .build()
       )
       .field(
@@ -175,7 +174,7 @@ public class ServiceJourneyType {
           .newFieldDefinition()
           .name("journeyPattern")
           .type(journeyPatternType)
-          .dataFetcher(env -> GqlUtil.getRoutingService(env).getPatternForTrip().get(trip(env)))
+          .dataFetcher(env -> GqlUtil.getTransitService(env).getPatternForTrip().get(trip(env)))
           .build()
       )
       .field(
@@ -205,7 +204,7 @@ public class ServiceJourneyType {
             Integer last = environment.getArgument("last");
 
             List<StopLocation> stops = GqlUtil
-              .getRoutingService(environment)
+              .getTransitService(environment)
               .getPatternForTrip()
               .get(trip(environment))
               .getStops();
@@ -239,7 +238,7 @@ public class ServiceJourneyType {
           .dataFetcher(env -> {
             Trip trip = trip(env);
             return TripTimeOnDate.fromTripTimes(
-              GqlUtil.getRoutingService(env).getPatternForTrip().get(trip).getScheduledTimetable(),
+              GqlUtil.getTransitService(env).getPatternForTrip().get(trip).getScheduledTimetable(),
               trip
             );
           })
@@ -272,6 +271,7 @@ public class ServiceJourneyType {
               .orElse(new ServiceDate());
             return TripTimesShortHelper.getTripTimesShort(
               GqlUtil.getRoutingService(environment),
+              GqlUtil.getTransitService(environment),
               trip(environment),
               serviceDate
             );
@@ -288,7 +288,7 @@ public class ServiceJourneyType {
           )
           .dataFetcher(environment -> {
             TripPattern tripPattern = GqlUtil
-              .getRoutingService(environment)
+              .getTransitService(environment)
               .getPatternForTrip()
               .get(trip(environment));
             if (tripPattern == null) {
@@ -309,7 +309,7 @@ public class ServiceJourneyType {
           .newFieldDefinition()
           .name("notices")
           .type(new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(noticeType))))
-          .dataFetcher(env -> GqlUtil.getRoutingService(env).getNoticesByEntity(trip(env)))
+          .dataFetcher(env -> GqlUtil.getTransitService(env).getNoticesByEntity(trip(env)))
           .build()
       )
       .field(

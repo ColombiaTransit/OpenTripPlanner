@@ -68,8 +68,7 @@ public class RoutingWorker {
     request.applyPageCursor();
     this.request = request;
     this.router = router;
-    this.debugTimingAggregator =
-      new DebugTimingAggregator(router.meterRegistry, request.tags.getTimingTags());
+    this.debugTimingAggregator = new DebugTimingAggregator(router.meterRegistry, request.tags);
     this.transitSearchTimeZero = DateMapper.asStartOfService(request.getDateTime(), zoneId);
     this.pagingSearchWindowAdjuster = createPagingSearchWindowAdjuster(router.routerConfig);
     this.additionalSearchDays =
@@ -81,7 +80,8 @@ public class RoutingWorker {
     // See {@link FilterTransitWhenDirectModeIsEmpty}
     var emptyDirectModeHandler = new FilterTransitWhenDirectModeIsEmpty(request.modes);
 
-    request.modes.directMode = emptyDirectModeHandler.resolveDirectMode();
+    request.modes =
+      request.modes.copy().withDirectMode(emptyDirectModeHandler.resolveDirectMode()).build();
 
     this.debugTimingAggregator.finishedPrecalculating();
 
@@ -140,7 +140,8 @@ public class RoutingWorker {
     this.debugTimingAggregator.finishedFiltering();
 
     // Restore original directMode.
-    request.modes.directMode = emptyDirectModeHandler.originalDirectMode();
+    request.modes =
+      request.modes.copy().withDirectMode(emptyDirectModeHandler.originalDirectMode()).build();
 
     // Adjust the search-window for the next search if the current search-window
     // is off (too few or too many results found).

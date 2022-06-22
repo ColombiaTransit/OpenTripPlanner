@@ -2,13 +2,12 @@ package org.opentripplanner.standalone.config;
 
 import static org.opentripplanner.standalone.config.WheelchairAccessibilityRequestMapper.mapAccessibilityRequest;
 
-import java.time.Duration;
-import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.api.request.TransferOptimizationRequest;
 import org.opentripplanner.standalone.config.sandbox.DataOverlayParametersMapper;
+import org.opentripplanner.transit.model.network.TransitMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,10 +98,7 @@ public class RoutingRequestMapper {
     request.maxDirectStreetDurationForMode =
       c.asEnumMap("maxDirectStreetDurationForMode", StreetMode.class, NodeAdapter::asDuration);
     request.maxJourneyDuration = c.asDuration("maxJourneyDuration", dft.maxJourneyDuration);
-    request.maxWheelchairSlope = c.asDouble("maxWheelchairSlope", dft.maxWheelchairSlope); // ADA max wheelchair ramp slope is a good default.
-    request.wheelchairSlopeTooSteepCostFactor =
-      c.asDouble("wheelchairSlopeTooSteepCostFactor", dft.wheelchairSlopeTooSteepCostFactor);
-    request.modes = c.asRequestModes("modes", RequestModes.defaultRequestModes);
+    request.modes = c.asRequestModes("modes", RequestModes.defaultRequestModes());
     request.nonpreferredTransferCost =
       c.asInt("nonpreferredTransferPenalty", dft.nonpreferredTransferCost);
     request.numItineraries = c.asInt("numItineraries", dft.numItineraries);

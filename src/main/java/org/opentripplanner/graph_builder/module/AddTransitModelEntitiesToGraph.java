@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.opentripplanner.ext.flex.trip.FlexTrip;
-import org.opentripplanner.model.BoardingArea;
-import org.opentripplanner.model.Entrance;
 import org.opentripplanner.model.FeedInfo;
 import org.opentripplanner.model.FlexLocationGroup;
 import org.opentripplanner.model.FlexStopLocation;
@@ -17,14 +15,7 @@ import org.opentripplanner.model.GroupOfStations;
 import org.opentripplanner.model.MultiModalStation;
 import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.model.Pathway;
-import org.opentripplanner.model.PathwayNode;
-import org.opentripplanner.model.Station;
-import org.opentripplanner.model.StationElement;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.StopLocation;
-import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.TripPattern;
-import org.opentripplanner.model.WheelchairBoarding;
 import org.opentripplanner.routing.edgetype.ElevatorAlightEdge;
 import org.opentripplanner.routing.edgetype.ElevatorBoardEdge;
 import org.opentripplanner.routing.edgetype.ElevatorHopEdge;
@@ -38,7 +29,16 @@ import org.opentripplanner.routing.vertextype.TransitBoardingAreaVertex;
 import org.opentripplanner.routing.vertextype.TransitEntranceVertex;
 import org.opentripplanner.routing.vertextype.TransitPathwayNodeVertex;
 import org.opentripplanner.routing.vertextype.TransitStopVertex;
+import org.opentripplanner.transit.model.basic.WheelchairAccessibility;
+import org.opentripplanner.transit.model.network.TransitMode;
 import org.opentripplanner.transit.model.organization.Agency;
+import org.opentripplanner.transit.model.site.BoardingArea;
+import org.opentripplanner.transit.model.site.Entrance;
+import org.opentripplanner.transit.model.site.PathwayNode;
+import org.opentripplanner.transit.model.site.Station;
+import org.opentripplanner.transit.model.site.StationElement;
+import org.opentripplanner.transit.model.site.Stop;
+import org.opentripplanner.transit.model.site.StopLocation;
 import org.opentripplanner.util.I18NString;
 import org.opentripplanner.util.NonLocalizedString;
 import org.opentripplanner.util.OTPFeature;
@@ -175,7 +175,8 @@ public class AddTransitModelEntitiesToGraph {
       stationElementNodes.put(boardingArea, boardingAreaVertex);
       if (boardingArea.getParentStop() != null) {
         var platformVertex = stationElementNodes.get(boardingArea.getParentStop());
-        boolean wheelchair = boardingArea.getWheelchairBoarding() == WheelchairBoarding.POSSIBLE;
+        boolean wheelchair =
+          boardingArea.getWheelchairAccessibility() == WheelchairAccessibility.POSSIBLE;
 
         PathwayEdge.lowCost(
           boardingAreaVertex,
@@ -323,6 +324,7 @@ public class AddTransitModelEntitiesToGraph {
       fromOnboardVertex,
       toOnboardVertex,
       permission,
+      WheelchairAccessibility.POSSIBLE,
       levels,
       pathway.getTraversalTime()
     );
@@ -336,6 +338,7 @@ public class AddTransitModelEntitiesToGraph {
         toOnboardVertex,
         fromOnboardVertex,
         permission,
+        WheelchairAccessibility.POSSIBLE,
         levels,
         pathway.getTraversalTime()
       );

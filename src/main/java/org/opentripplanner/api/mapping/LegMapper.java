@@ -83,7 +83,7 @@ public class LegMapper {
     api.realTime = domain.getRealTime();
     api.isNonExactFrequency = domain.getNonExactFrequency();
     api.headway = domain.getHeadway();
-    api.distance = domain.getDistanceMeters();
+    api.distance = round3Decimals(domain.getDistanceMeters());
     api.generalizedCost = domain.getGeneralizedCost();
     api.pathway = domain.getPathwayId() != null;
     api.mode = TraverseModeMapper.mapToApi(domain.getMode());
@@ -108,8 +108,8 @@ public class LegMapper {
 
       var trip = domain.getTrip();
       api.tripId = FeedScopedIdMapper.mapToApi(trip.getId());
-      api.tripShortName = trip.getTripShortName();
-      api.tripBlockId = trip.getBlockId();
+      api.tripShortName = trip.getShortName();
+      api.tripBlockId = trip.getGtfsBlockId();
     } else if (domain.getPathwayId() != null) {
       api.route = FeedScopedIdMapper.mapToApi(domain.getPathwayId());
     } else {
@@ -144,6 +144,10 @@ public class LegMapper {
     api.accessibilityScore = domain.accessibilityScore();
 
     return api;
+  }
+
+  private Double round3Decimals(double value) {
+    return Math.round(value * 1000d) / 1000d;
   }
 
   private static String getBoardAlightMessage(PickDrop boardAlightType) {

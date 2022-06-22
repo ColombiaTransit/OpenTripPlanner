@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -203,8 +204,7 @@ public class OSMDatabase {
   }
 
   public OSMLevel getLevelForWay(OSMWithTags way) {
-    OSMLevel level = wayLevels.get(way);
-    return level != null ? level : OSMLevel.DEFAULT;
+    return Objects.requireNonNullElse(wayLevels.get(way), OSMLevel.DEFAULT);
   }
 
   public Set<OSMWay> getAreasForNode(Long nodeId) {
@@ -239,12 +239,7 @@ public class OSMDatabase {
     if (nodesById.containsKey(node.getId())) {
       return;
     }
-
     nodesById.put(node.getId(), node);
-
-    if (nodesById.size() % 100000 == 0) {
-      LOG.debug("nodes=" + nodesById.size());
-    }
   }
 
   public void addWay(OSMWay way) {
@@ -278,7 +273,7 @@ public class OSMDatabase {
         way.isTag("area", "yes") ||
         way.isTag("amenity", "parking") ||
         way.isTag("amenity", "bicycle_parking") ||
-        way.isBoardingLocation()
+        way.isBoardingArea()
       ) &&
       way.getNodeRefs().size() > 2
     ) {

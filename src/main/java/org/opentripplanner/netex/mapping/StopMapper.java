@@ -4,14 +4,16 @@ import java.util.Collection;
 import javax.annotation.Nullable;
 import org.opentripplanner.common.model.T2;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
-import org.opentripplanner.model.FareZone;
-import org.opentripplanner.model.Station;
-import org.opentripplanner.model.Stop;
-import org.opentripplanner.model.TransitMode;
-import org.opentripplanner.model.WgsCoordinate;
-import org.opentripplanner.model.WheelchairBoarding;
 import org.opentripplanner.netex.issues.QuayWithoutCoordinates;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
+import org.opentripplanner.transit.model.basic.WgsCoordinate;
+import org.opentripplanner.transit.model.basic.WheelchairAccessibility;
+import org.opentripplanner.transit.model.network.TransitMode;
+import org.opentripplanner.transit.model.site.FareZone;
+import org.opentripplanner.transit.model.site.Station;
+import org.opentripplanner.transit.model.site.Stop;
+import org.opentripplanner.util.NonLocalizedString;
+import org.rutebanken.netex.model.MultilingualString;
 import org.rutebanken.netex.model.Quay;
 
 class StopMapper {
@@ -34,7 +36,7 @@ class StopMapper {
     Station parentStation,
     Collection<FareZone> fareZones,
     T2<TransitMode, String> transitMode,
-    WheelchairBoarding wheelChairBoarding
+    WheelchairAccessibility wheelchair
   ) {
     WgsCoordinate coordinate = WgsCoordinateMapper.mapToDomain(quay.getCentroid());
 
@@ -43,24 +45,21 @@ class StopMapper {
       return null;
     }
 
-    Stop stop = new Stop(
-      idFactory.createId(quay.getId()),
-      parentStation.getName(),
-      quay.getPublicCode(),
-      quay.getDescription() != null ? quay.getDescription().getValue() : null,
-      WgsCoordinateMapper.mapToDomain(quay.getCentroid()),
-      wheelChairBoarding,
-      null,
-      null,
-      fareZones,
-      null,
-      null,
-      transitMode.first,
-      transitMode.second
-    );
+    var builder = Stop
+      .of(idFactory.createId(quay.getId()))
+      .withParentStation(parentStation)
+      .withName(parentStation.getName())
+      .withCode(quay.getPublicCode())
+      .withDescription(
+        NonLocalizedString.ofNullable(quay.getDescription(), MultilingualString::getValue)
+      )
+      .withCoordinate(WgsCoordinateMapper.mapToDomain(quay.getCentroid()))
+      .withWheelchairAccessibility(wheelchair)
+      .withVehicleType(transitMode.first)
+      .withNetexVehicleSubmode(transitMode.second);
 
-    stop.setParentStation(parentStation);
+    builder.fareZones().addAll(fareZones);
 
-    return stop;
+    return builder.build();
   }
 }

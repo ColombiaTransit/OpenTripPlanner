@@ -45,6 +45,10 @@
   [#4123](https://github.com/opentripplanner/OpenTripPlanner/pull/4123)
 - Expose datedServiceJourney from EstimatedCall 
   [#4128](https://github.com/opentripplanner/OpenTripPlanner/pull/4128)
+- Expose stop-to-stop journey pattern geometries
+  [#4161](https://github.com/opentripplanner/OpenTripPlanner/pull/4161)
+- Add possibility to filter dated service journeys by replacementFor
+  [#4198](https://github.com/opentripplanner/OpenTripPlanner/pull/4198)
 
 ## Documentation
 

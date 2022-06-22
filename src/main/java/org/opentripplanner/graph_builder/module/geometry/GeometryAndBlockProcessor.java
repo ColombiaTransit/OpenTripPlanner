@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.commons.math3.util.FastMath;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateSequence;
 import org.locationtech.jts.geom.Geometry;
@@ -35,17 +34,17 @@ import org.opentripplanner.graph_builder.issues.InterliningTeleport;
 import org.opentripplanner.gtfs.GtfsContext;
 import org.opentripplanner.model.OtpTransitService;
 import org.opentripplanner.model.ShapePoint;
-import org.opentripplanner.model.StopLocation;
 import org.opentripplanner.model.StopTime;
 import org.opentripplanner.model.Timetable;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.routing.fares.FareService;
 import org.opentripplanner.routing.fares.FareServiceFactory;
 import org.opentripplanner.routing.fares.impl.DefaultFareServiceFactory;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.trippattern.TripTimes;
-import org.opentripplanner.transit.model.basic.FeedScopedId;
+import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.util.logging.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -224,7 +223,7 @@ public class GeometryAndBlockProcessor {
       /* TODO: Block semantics seem undefined for frequency trips, so skip them? */
       for (TripTimes tripTimes : timetable.getTripTimes()) {
         Trip trip = tripTimes.getTrip();
-        if (!Strings.isNullOrEmpty(trip.getBlockId())) {
+        if (!Strings.isNullOrEmpty(trip.getGtfsBlockId())) {
           tripTimesForBlock.put(new BlockIdAndServiceId(trip), tripTimes);
           // For space efficiency, only record times that are part of a block.
           patternForTripTimes.put(tripTimes, pattern);
@@ -343,7 +342,7 @@ public class GeometryAndBlockProcessor {
         Coordinate to = shape.getCoordinateN(j + 1);
         double xd = from.x - to.x;
         double yd = from.y - to.y;
-        distanceSoFar += FastMath.sqrt(xd * xd + yd * yd);
+        distanceSoFar += Math.sqrt(xd * xd + yd * yd);
       }
       last = startLocation.getSegmentIndex();
 
@@ -355,7 +354,7 @@ public class GeometryAndBlockProcessor {
         Coordinate to = shape.getCoordinateN(j + 1);
         double xd = from.x - to.x;
         double yd = from.y - to.y;
-        distanceSoFar += FastMath.sqrt(xd * xd + yd * yd);
+        distanceSoFar += Math.sqrt(xd * xd + yd * yd);
       }
       last = startLocation.getSegmentIndex();
       double endIndex =

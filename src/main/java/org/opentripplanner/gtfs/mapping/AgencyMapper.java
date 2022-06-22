@@ -3,7 +3,7 @@ package org.opentripplanner.gtfs.mapping;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import org.opentripplanner.transit.model.basic.FeedScopedId;
+import org.opentripplanner.transit.model.framework.FeedScopedId;
 import org.opentripplanner.transit.model.organization.Agency;
 import org.opentripplanner.util.MapUtils;
 
@@ -30,13 +30,13 @@ class AgencyMapper {
   private Agency doMap(org.onebusaway.gtfs.model.Agency rhs) {
     return Agency
       .of(new FeedScopedId(feedId, rhs.getId()))
-      .setName(rhs.getName())
-      .setTimezone(rhs.getTimezone())
-      .setUrl(rhs.getUrl())
-      .setLang(rhs.getLang())
-      .setPhone(rhs.getPhone())
-      .setFareUrl(rhs.getFareUrl())
-      .setBrandingUrl(rhs.getBrandingUrl())
+      .withName(rhs.getName())
+      .withTimezone(rhs.getTimezone())
+      .withUrl(rhs.getUrl())
+      .withLang(rhs.getLang())
+      .withPhone(rhs.getPhone())
+      .withFareUrl(rhs.getFareUrl())
+      .withBrandingUrl(rhs.getBrandingUrl())
       .build();
   }
 }

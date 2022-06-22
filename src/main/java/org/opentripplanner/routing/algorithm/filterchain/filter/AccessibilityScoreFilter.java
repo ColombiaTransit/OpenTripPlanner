@@ -3,11 +3,11 @@ package org.opentripplanner.routing.algorithm.filterchain.filter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import org.opentripplanner.model.WheelchairBoarding;
 import org.opentripplanner.model.plan.Itinerary;
 import org.opentripplanner.model.plan.Leg;
 import org.opentripplanner.model.plan.ScheduledTransitLeg;
 import org.opentripplanner.routing.algorithm.filterchain.ItineraryListFilter;
+import org.opentripplanner.transit.model.basic.WheelchairAccessibility;
 
 /**
  * An experimental feature for calculating a numeric score between 0 and 1 which indicates how
@@ -29,7 +29,8 @@ public class AccessibilityScoreFilter implements ItineraryListFilter {
   }
 
   private Itinerary addAccessibilityScore(Itinerary i) {
-    var scoredLegs = i.legs
+    var scoredLegs = i
+      .getLegs()
       .stream()
       .map(leg -> {
         if (leg instanceof ScheduledTransitLeg transitLeg) {
@@ -38,8 +39,8 @@ public class AccessibilityScoreFilter implements ItineraryListFilter {
       })
       .toList();
 
-    i.legs = scoredLegs;
-    i.accessibilityScore = compute(scoredLegs);
+    i.setLegs(scoredLegs);
+    i.setAccessibilityScore(compute(scoredLegs));
     return i;
   }
 
@@ -53,8 +54,8 @@ public class AccessibilityScoreFilter implements ItineraryListFilter {
   }
 
   public static float compute(ScheduledTransitLeg leg) {
-    var fromStop = leg.getFrom().stop.getWheelchairBoarding();
-    var toStop = leg.getFrom().stop.getWheelchairBoarding();
+    var fromStop = leg.getFrom().stop.getWheelchairAccessibility();
+    var toStop = leg.getFrom().stop.getWheelchairAccessibility();
     var trip = leg.getTrip().getWheelchairBoarding();
 
     var values = List.of(trip, fromStop, toStop);
@@ -65,7 +66,7 @@ public class AccessibilityScoreFilter implements ItineraryListFilter {
     return sum / values.size();
   }
 
-  public static double accessibilityScore(WheelchairBoarding wheelchair) {
+  public static double accessibilityScore(WheelchairAccessibility wheelchair) {
     return switch (wheelchair) {
       case NO_INFORMATION -> 0.5;
       case POSSIBLE -> 1;

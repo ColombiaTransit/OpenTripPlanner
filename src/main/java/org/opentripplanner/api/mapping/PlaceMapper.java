@@ -11,11 +11,11 @@ import java.util.stream.Collectors;
 import org.opentripplanner.api.model.ApiPlace;
 import org.opentripplanner.api.model.ApiVehicleParkingSpaces;
 import org.opentripplanner.api.model.ApiVehicleParkingWithEntrance;
-import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.plan.Place;
 import org.opentripplanner.model.plan.StopArrival;
 import org.opentripplanner.model.plan.VehicleParkingWithEntrance;
 import org.opentripplanner.routing.vehicle_parking.VehicleParkingSpaces;
+import org.opentripplanner.transit.model.site.Stop;
 
 public class PlaceMapper {
 
@@ -78,6 +78,8 @@ public class PlaceMapper {
     api.vertexType = VertexTypeMapper.mapVertexType(domain.vertexType);
     if (domain.vehicleRentalPlace != null) {
       api.bikeShareId = domain.vehicleRentalPlace.getStationId();
+      // for backwards-compatibility with the IBI frontend this always returns a list of a single item
+      api.networks = List.of(domain.vehicleRentalPlace.getNetwork());
     }
     if (domain.vehicleParkingWithEntrance != null) {
       api.vehicleParking = mapVehicleParking(domain.vehicleParkingWithEntrance);

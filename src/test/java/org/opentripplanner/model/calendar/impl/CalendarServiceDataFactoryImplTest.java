@@ -31,7 +31,7 @@ import org.opentripplanner.model.calendar.ServiceCalendarDate;
 import org.opentripplanner.model.calendar.ServiceDate;
 import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
 import org.opentripplanner.transit.model._data.TransitModelForTest;
-import org.opentripplanner.transit.model.basic.FeedScopedId;
+import org.opentripplanner.transit.model.framework.FeedScopedId;
 import org.opentripplanner.transit.model.organization.Agency;
 
 /**
@@ -179,8 +179,8 @@ public class CalendarServiceDataFactoryImplTest {
     return sort(c).get(0);
   }
 
-  private static <T extends Comparable<T>> String toString(Collection<T> c) {
-    return c.stream().sorted(comparing(T::toString)).toList().toString();
+  private static String toString(Collection<?> c) {
+    return c.stream().sorted(comparing(Object::toString)).toList().toString();
   }
 
   private static List<String> sevenFirstDays(List<ServiceDate> dates) {

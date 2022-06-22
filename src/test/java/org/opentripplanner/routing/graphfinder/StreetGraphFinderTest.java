@@ -6,9 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.opentripplanner.model.Route;
 import org.opentripplanner.model.StopPattern;
-import org.opentripplanner.model.TransitMode;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.routing.RoutingService;
 import org.opentripplanner.routing.algorithm.GraphRoutingTest;
@@ -19,6 +17,10 @@ import org.opentripplanner.routing.vertextype.IntersectionVertex;
 import org.opentripplanner.routing.vertextype.TransitStopVertex;
 import org.opentripplanner.routing.vertextype.VehicleRentalPlaceVertex;
 import org.opentripplanner.transit.model._data.TransitModelForTest;
+import org.opentripplanner.transit.model.network.Route;
+import org.opentripplanner.transit.model.network.TransitMode;
+import org.opentripplanner.transit.service.DefaultTransitService;
+import org.opentripplanner.transit.service.TransitService;
 
 class StreetGraphFinderTest extends GraphRoutingTest {
 
@@ -26,6 +28,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
   private IntersectionVertex A, B, C, D;
   private VehicleRentalPlaceVertex BR1, BR2;
   private RoutingService routingService;
+
+  private TransitService transitService;
   private StreetGraphFinder graphFinder;
   private Route R1, R2;
   private TripPattern TP1, TP2;
@@ -117,6 +121,7 @@ class StreetGraphFinderTest extends GraphRoutingTest {
     graph.index = new GraphIndex(graph);
 
     routingService = new RoutingService(graph);
+    transitService = new DefaultTransitService(graph);
     graphFinder = new StreetGraphFinder(graph);
   }
 
@@ -154,7 +159,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
 
@@ -170,7 +176,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
 
@@ -186,7 +193,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
   }
@@ -209,7 +217,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
 
@@ -225,7 +234,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
   }
@@ -249,7 +259,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
 
@@ -265,7 +276,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         List.of(S2.getStop().getId()),
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
   }
@@ -289,7 +301,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
 
@@ -305,7 +318,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         List.of(S2.getStop().getId()),
         List.of(R1.getId()),
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
   }
@@ -330,7 +344,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
 
@@ -346,7 +361,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         List.of(R2.getId()),
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
   }
@@ -368,7 +384,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
 
@@ -384,7 +401,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         List.of("BR2"),
-        routingService
+        routingService,
+        transitService
       )
     );
   }
@@ -405,7 +423,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
   }
@@ -426,7 +445,8 @@ class StreetGraphFinderTest extends GraphRoutingTest {
         null,
         null,
         null,
-        routingService
+        routingService,
+        transitService
       )
     );
   }

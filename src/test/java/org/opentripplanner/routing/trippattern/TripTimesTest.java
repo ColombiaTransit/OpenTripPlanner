@@ -1,24 +1,21 @@
 package org.opentripplanner.routing.trippattern;
 
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.List;
-import org.junit.Test;
-import org.opentripplanner.model.Stop;
+import org.junit.jupiter.api.Test;
 import org.opentripplanner.model.StopTime;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.transit.model._data.TransitModelForTest;
-import org.opentripplanner.transit.model.basic.FeedScopedId;
+import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.site.Stop;
+import org.opentripplanner.transit.model.timetable.Trip;
 
 public class TripTimesTest {
 
-  private static final FeedScopedId TRIP_ID = TransitModelForTest.id("testTripId");
-  private static final FeedScopedId ROUTE_ID = TransitModelForTest.id("testRrouteId");
+  private static final String TRIP_ID = "testTripId";
 
   private static final FeedScopedId STOP_A = TransitModelForTest.id("A"); // 0
   private static final FeedScopedId STOP_B = TransitModelForTest.id("B"); // 1
@@ -43,14 +40,14 @@ public class TripTimesTest {
   private static final TripTimes originalTripTimes;
 
   static {
-    Trip trip = new Trip(TRIP_ID);
+    Trip trip = TransitModelForTest.trip(TRIP_ID).build();
 
     List<StopTime> stopTimes = new LinkedList<>();
 
     for (int i = 0; i < stops.length; ++i) {
       StopTime stopTime = new StopTime();
 
-      Stop stop = Stop.stopForTest(stops[i].getId(), 0.0, 0.0);
+      Stop stop = TransitModelForTest.stopForTest(stops[i].getId(), 0.0, 0.0);
       stopTime.setStop(stop);
       stopTime.setArrivalTime(i * 60);
       stopTime.setDepartureTime(i * 60);
@@ -141,7 +138,7 @@ public class TripTimesTest {
 
   @Test
   public void testApply() {
-    Trip trip = new Trip(TRIP_ID);
+    Trip trip = TransitModelForTest.trip(TRIP_ID).build();
 
     List<StopTime> stopTimes = new LinkedList<>();
 
@@ -149,9 +146,9 @@ public class TripTimesTest {
     StopTime stopTime1 = new StopTime();
     StopTime stopTime2 = new StopTime();
 
-    Stop stop0 = Stop.stopForTest(stops[0].getId(), 0.0, 0.0);
-    Stop stop1 = Stop.stopForTest(stops[1].getId(), 0.0, 0.0);
-    Stop stop2 = Stop.stopForTest(stops[2].getId(), 0.0, 0.0);
+    Stop stop0 = TransitModelForTest.stopForTest(stops[0].getId(), 0.0, 0.0);
+    Stop stop1 = TransitModelForTest.stopForTest(stops[1].getId(), 0.0, 0.0);
+    Stop stop2 = TransitModelForTest.stopForTest(stops[2].getId(), 0.0, 0.0);
 
     stopTime0.setStop(stop0);
     stopTime0.setDepartureTime(0);

@@ -3,13 +3,13 @@ package org.opentripplanner.routing.algorithm.raptoradapter.transit.request;
 import java.util.BitSet;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
-import org.opentripplanner.model.WheelchairBoarding;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.SlackProvider;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternForDate;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternWithRaptorStopIndexes;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripSchedule;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.frequency.TripFrequencyAlightSearch;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.frequency.TripFrequencyBoardSearch;
+import org.opentripplanner.transit.model.basic.WheelchairAccessibility;
 import org.opentripplanner.transit.raptor.api.request.SearchDirection;
 import org.opentripplanner.transit.raptor.api.transit.IntIterator;
 import org.opentripplanner.transit.raptor.api.transit.RaptorConstrainedTripScheduleBoardingSearch;
@@ -56,7 +56,7 @@ public class TripPatternForDates
    */
   private final int[] departureTimes;
 
-  private final WheelchairBoarding[] wheelchairBoardings;
+  private final WheelchairAccessibility[] wheelchairBoardings;
 
   // bit arrays with boarding/alighting information for all stops on trip pattern
   private final BitSet boardingPossible;
@@ -87,7 +87,7 @@ public class TripPatternForDates
     this.numberOfTripSchedules = numberOfTripSchedules;
     this.isFrequencyBased = hasFrequencies;
 
-    wheelchairBoardings = new WheelchairBoarding[numberOfTripSchedules];
+    wheelchairBoardings = new WheelchairAccessibility[numberOfTripSchedules];
 
     final int nStops = tripPattern.getStopIndexes().length;
     this.arrivalTimes = new int[nStops * numberOfTripSchedules];
@@ -263,7 +263,7 @@ public class TripPatternForDates
       .toString();
   }
 
-  public WheelchairBoarding wheelchairBoardingForTrip(int index) {
+  public WheelchairAccessibility wheelchairBoardingForTrip(int index) {
     return wheelchairBoardings[index];
   }
 }

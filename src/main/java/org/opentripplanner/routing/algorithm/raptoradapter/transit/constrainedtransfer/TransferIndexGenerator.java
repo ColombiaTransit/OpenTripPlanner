@@ -12,10 +12,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
-import org.opentripplanner.model.Route;
-import org.opentripplanner.model.Station;
-import org.opentripplanner.model.StopLocation;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.model.transfer.ConstrainedTransfer;
 import org.opentripplanner.model.transfer.RouteStationTransferPoint;
@@ -26,6 +22,10 @@ import org.opentripplanner.model.transfer.TransferPoint;
 import org.opentripplanner.model.transfer.TripTransferPoint;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.StopIndexForRaptor;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TripPatternWithRaptorStopIndexes;
+import org.opentripplanner.transit.model.network.Route;
+import org.opentripplanner.transit.model.site.Station;
+import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Trip;
 
 public class TransferIndexGenerator {
 

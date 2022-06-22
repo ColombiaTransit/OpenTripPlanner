@@ -1,10 +1,10 @@
 package org.opentripplanner.routing.vertextype;
 
-import org.opentripplanner.model.PathwayNode;
-import org.opentripplanner.model.StationElement;
-import org.opentripplanner.model.WheelchairBoarding;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
+import org.opentripplanner.transit.model.basic.WheelchairAccessibility;
+import org.opentripplanner.transit.model.site.PathwayNode;
+import org.opentripplanner.transit.model.site.StationElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +30,8 @@ public class TransitPathwayNodeVertex extends Vertex {
       node.getName()
     );
     this.node = node;
-    this.wheelchairEntrance = node.getWheelchairBoarding() != WheelchairBoarding.NOT_POSSIBLE;
+    this.wheelchairEntrance =
+      node.getWheelchairAccessibility() != WheelchairAccessibility.NOT_POSSIBLE;
     //Adds this vertex into graph envelope so that we don't need to loop over all vertices
     graph.expandToInclude(node.getCoordinate().longitude(), node.getCoordinate().latitude());
   }

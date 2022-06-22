@@ -5,10 +5,10 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.opentripplanner.model.Trip;
 import org.opentripplanner.model.plan.Itinerary;
 import org.opentripplanner.model.plan.Leg;
 import org.opentripplanner.routing.algorithm.filterchain.filter.GroupByFilter;
+import org.opentripplanner.transit.model.timetable.Trip;
 
 /**
  * This filter marks itineraries, which use same trips for most of their legs, but where some
@@ -40,7 +40,8 @@ public class OtherThanSameLegsMaxGeneralizedCostFilter implements ItineraryDelet
 
     // Get all transit trips for an itinerary
     Function<Itinerary, Set<Trip>> getTripsForItinerary = itinerary ->
-      itinerary.legs
+      itinerary
+        .getLegs()
         .stream()
         .filter(Leg::isTransitLeg)
         .map(Leg::getTrip)
@@ -60,7 +61,8 @@ public class OtherThanSameLegsMaxGeneralizedCostFilter implements ItineraryDelet
     OptionalInt commonCost = itineraries
       .stream()
       .mapToInt(itinerary ->
-        itinerary.legs
+        itinerary
+          .getLegs()
           .stream()
           .filter(Leg::isTransitLeg)
           .filter(leg -> commonTrips.contains(leg.getTrip()))
@@ -76,7 +78,7 @@ public class OtherThanSameLegsMaxGeneralizedCostFilter implements ItineraryDelet
     // Find the lowest cost for any itinerary
     OptionalInt minimumCost = itineraries
       .stream()
-      .mapToInt(itinerary -> itinerary.generalizedCost)
+      .mapToInt(itinerary -> itinerary.getGeneralizedCost())
       .min();
 
     if (minimumCost.isEmpty()) {
@@ -90,7 +92,7 @@ public class OtherThanSameLegsMaxGeneralizedCostFilter implements ItineraryDelet
 
     return itineraries
       .stream()
-      .filter(it -> it.generalizedCost > maxLimit)
+      .filter(it -> it.getGeneralizedCost() > maxLimit)
       .collect(Collectors.toList());
   }
 }

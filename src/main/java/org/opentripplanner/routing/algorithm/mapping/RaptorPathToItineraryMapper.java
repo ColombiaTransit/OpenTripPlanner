@@ -35,6 +35,7 @@ import org.opentripplanner.transit.raptor.api.path.Path;
 import org.opentripplanner.transit.raptor.api.path.PathLeg;
 import org.opentripplanner.transit.raptor.api.path.TransferPathLeg;
 import org.opentripplanner.transit.raptor.api.path.TransitPathLeg;
+import org.opentripplanner.transit.service.TransitModel;
 
 /**
  * This maps the paths found by the Raptor search algorithm to the itinerary structure currently
@@ -66,6 +67,7 @@ public class RaptorPathToItineraryMapper {
    */
   public RaptorPathToItineraryMapper(
     Graph graph,
+    TransitModel transitModel,
     TransitLayer transitLayer,
     ZonedDateTime transitSearchTimeZero,
     RoutingRequest request
@@ -74,10 +76,14 @@ public class RaptorPathToItineraryMapper {
     this.transitLayer = transitLayer;
     this.transitSearchTimeZero = transitSearchTimeZero;
     this.request = request;
-    this.alertToLegMapper = new AlertToLegMapper(graph.getTransitAlertService());
+    this.alertToLegMapper =
+      new AlertToLegMapper(
+        transitModel.getTransitAlertService(),
+        transitModel.getStopModel().getStopModelIndex().getMultiModalStationForStations()::get
+      );
     this.graphPathToItineraryMapper =
       new GraphPathToItineraryMapper(
-        graph.getTimeZone(),
+        transitModel.getTimeZone(),
         alertToLegMapper,
         graph.streetNotesService,
         graph.ellipsoidToGeoidDifference
@@ -214,7 +220,7 @@ public class RaptorPathToItineraryMapper {
         );
     }
 
-    alertToLegMapper.addTransitAlertPatchesToLeg(leg, firstLeg);
+    alertToLegMapper.addTransitAlertsToLeg(leg, firstLeg);
 
     return leg;
   }

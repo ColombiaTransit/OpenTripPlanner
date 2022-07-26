@@ -3,9 +3,9 @@ package org.opentripplanner.netex.configure;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.opentripplanner.datastore.CompositeDataSource;
-import org.opentripplanner.datastore.DataSource;
-import org.opentripplanner.datastore.FileType;
+import org.opentripplanner.datastore.api.CompositeDataSource;
+import org.opentripplanner.datastore.api.DataSource;
+import org.opentripplanner.datastore.api.FileType;
 import org.opentripplanner.datastore.file.ZipFileDataSource;
 import org.opentripplanner.netex.NetexBundle;
 import org.opentripplanner.netex.NetexModule;
@@ -54,8 +54,6 @@ public class NetexConfig {
     return new NetexModule(
       buildParams.netex.netexFeedId,
       buildParams.getSubwayAccessTimeSeconds(),
-      buildParams.maxInterlineDistance,
-      buildParams.maxStopToShapeSnapDistance,
       buildParams.getTransitServicePeriod(),
       netexBundles
     );
@@ -67,7 +65,8 @@ public class NetexConfig {
       buildParams.netex.netexFeedId,
       source,
       hierarchy(source),
-      buildParams.netex.ferryIdsNotAllowedForBicycle
+      buildParams.netex.ferryIdsNotAllowedForBicycle,
+      buildParams.maxStopToShapeSnapDistance
     );
   }
 

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
@@ -32,6 +33,7 @@ import org.opentripplanner.transit.model.framework.FeedScopedId;
 import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.organization.Agency;
 import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.timetable.Direction;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.opentripplanner.transit.service.TransitService;
 import org.opentripplanner.util.time.ServiceDateUtils;
@@ -83,7 +85,7 @@ public class LegacyGraphQLTripImpl implements LegacyGraphQLDataFetchers.LegacyGr
             case PATTERN:
               alerts.addAll(
                 alertService.getDirectionAndRouteAlerts(
-                  getSource(environment).getDirection().gtfsCode,
+                  getSource(environment).getDirection(),
                   getRoute(environment).getId()
                 )
               );
@@ -171,18 +173,12 @@ public class LegacyGraphQLTripImpl implements LegacyGraphQLDataFetchers.LegacyGr
 
   @Override
   public DataFetcher<String> bikesAllowed() {
-    return environment -> {
+    return environment ->
       switch (getSource(environment).getBikesAllowed()) {
-        case UNKNOWN:
-          return "NO_INFORMATION";
-        case ALLOWED:
-          return "POSSIBLE";
-        case NOT_ALLOWED:
-          return "NOT_POSSIBLE";
-        default:
-          return null;
-      }
-    };
+        case UNKNOWN -> "NO_INFORMATION";
+        case ALLOWED -> "POSSIBLE";
+        case NOT_ALLOWED -> "NOT_POSSIBLE";
+      };
   }
 
   @Override
@@ -226,7 +222,13 @@ public class LegacyGraphQLTripImpl implements LegacyGraphQLDataFetchers.LegacyGr
 
   @Override
   public DataFetcher<String> directionId() {
-    return environment -> getSource(environment).getGtfsDirectionIdAsString(null);
+    return environment -> {
+      Direction direction = getSource(environment).getDirection();
+      if (direction == Direction.UNKNOWN) {
+        return null;
+      }
+      return Integer.toString(direction.gtfsCode);
+    };
   }
 
   @Override
@@ -295,7 +297,11 @@ public class LegacyGraphQLTripImpl implements LegacyGraphQLDataFetchers.LegacyGr
 
   @Override
   public DataFetcher<String> shapeId() {
-    return environment -> getSource(environment).getShapeId().toString();
+    return environment ->
+      Optional
+        .ofNullable(getSource(environment).getShapeId())
+        .map(FeedScopedId::toString)
+        .orElse(null);
   }
 
   @Override
@@ -321,7 +327,6 @@ public class LegacyGraphQLTripImpl implements LegacyGraphQLDataFetchers.LegacyGr
   public DataFetcher<Iterable<TripTimeOnDate>> stoptimesForDate() {
     return environment -> {
       try {
-        RoutingService routingService = getRoutingService(environment);
         TransitService transitService = getTransitService(environment);
         Trip trip = getSource(environment);
         var args = new LegacyGraphQLTypes.LegacyGraphQLTripStoptimesForDateArgs(

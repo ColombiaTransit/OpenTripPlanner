@@ -98,6 +98,10 @@ public class ScheduledTransitLeg implements Leg {
     setDistanceMeters(getDistanceFromCoordinates(transitLegCoordinates));
   }
 
+  public ZoneId getZoneId() {
+    return zoneId;
+  }
+
   public TripTimes getTripTimes() {
     return tripTimes;
   }
@@ -368,8 +372,8 @@ public class ScheduledTransitLeg implements Leg {
       .of(ScheduledTransitLeg.class)
       .addObj("from", getFrom())
       .addObj("to", getTo())
-      .addTimeCal("startTime", startTime)
-      .addTimeCal("endTime", endTime)
+      .addTime("startTime", startTime)
+      .addTime("endTime", endTime)
       .addBool("realTime", getRealTime())
       .addNum("distance", distanceMeters, "m")
       .addNum("cost", generalizedCost)

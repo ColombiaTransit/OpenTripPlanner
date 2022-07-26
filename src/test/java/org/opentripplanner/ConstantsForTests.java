@@ -9,9 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import org.opentripplanner.datastore.CompositeDataSource;
-import org.opentripplanner.datastore.DataSource;
-import org.opentripplanner.datastore.FileType;
+import org.opentripplanner.datastore.api.CompositeDataSource;
+import org.opentripplanner.datastore.api.DataSource;
+import org.opentripplanner.datastore.api.FileType;
 import org.opentripplanner.datastore.file.ZipFileDataSource;
 import org.opentripplanner.ext.fares.impl.DefaultFareServiceFactory;
 import org.opentripplanner.graph_builder.linking.LinkingDirection;
@@ -42,10 +42,10 @@ import org.opentripplanner.routing.vehicle_rental.VehicleRentalStation;
 import org.opentripplanner.routing.vertextype.VehicleRentalPlaceVertex;
 import org.opentripplanner.standalone.config.BuildConfig;
 import org.opentripplanner.standalone.config.ConfigLoader;
+import org.opentripplanner.transit.model.basic.NonLocalizedString;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
 import org.opentripplanner.transit.service.StopModel;
 import org.opentripplanner.transit.service.TransitModel;
-import org.opentripplanner.util.NonLocalizedString;
 
 public class ConstantsForTests {
 
@@ -276,7 +276,7 @@ public class ConstantsForTests {
     return portlandGraphWithElevation;
   }
 
-  private static void addGtfsToGraph(
+  public static void addGtfsToGraph(
     Graph graph,
     TransitModel transitModel,
     String file,
@@ -290,14 +290,14 @@ public class ConstantsForTests {
       List.of(bundle),
       ServiceDateInterval.unbounded(),
       fareServiceFactory,
-      false
+      false,
+      300
     );
 
     module.buildGraph(graph, transitModel, new HashMap<>());
 
     transitModel.index();
     graph.index();
-    transitModel.hasTransit = true;
   }
 
   private static void addPortlandVehicleRentals(Graph graph) {

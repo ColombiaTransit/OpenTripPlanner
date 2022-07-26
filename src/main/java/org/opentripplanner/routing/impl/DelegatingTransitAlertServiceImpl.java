@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.opentripplanner.routing.alertpatch.TransitAlert;
 import org.opentripplanner.routing.services.TransitAlertService;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.timetable.Direction;
 import org.opentripplanner.transit.service.TransitModel;
 import org.opentripplanner.updater.alerts.TransitAlertProvider;
 
@@ -16,8 +17,9 @@ public class DelegatingTransitAlertServiceImpl implements TransitAlertService {
   private final ArrayList<TransitAlertService> transitAlertServices = new ArrayList<>();
 
   public DelegatingTransitAlertServiceImpl(TransitModel transitModel) {
-    if (transitModel.updaterManager != null) {
-      transitModel.updaterManager
+    if (transitModel.getUpdaterManager() != null) {
+      transitModel
+        .getUpdaterManager()
         .getUpdaterList()
         .stream()
         .filter(TransitAlertProvider.class::isInstance)
@@ -129,11 +131,13 @@ public class DelegatingTransitAlertServiceImpl implements TransitAlertService {
   }
 
   @Override
-  public Collection<TransitAlert> getDirectionAndRouteAlerts(int directionId, FeedScopedId route) {
+  public Collection<TransitAlert> getDirectionAndRouteAlerts(
+    Direction direction,
+    FeedScopedId route
+  ) {
     return transitAlertServices
       .stream()
-      .map(transitAlertService -> transitAlertService.getDirectionAndRouteAlerts(directionId, route)
-      )
+      .map(transitAlertService -> transitAlertService.getDirectionAndRouteAlerts(direction, route))
       .flatMap(Collection::stream)
       .collect(Collectors.toList());
   }

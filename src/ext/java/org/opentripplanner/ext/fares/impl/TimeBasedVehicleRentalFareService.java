@@ -8,7 +8,6 @@ import org.opentripplanner.model.plan.Itinerary;
 import org.opentripplanner.model.plan.Leg;
 import org.opentripplanner.routing.core.Fare;
 import org.opentripplanner.routing.core.Fare.FareType;
-import org.opentripplanner.routing.core.WrappedCurrency;
 import org.opentripplanner.routing.fares.FareService;
 
 /**
@@ -37,12 +36,12 @@ public class TimeBasedVehicleRentalFareService implements FareService, Serializa
     var totalCost = itinerary
       .getLegs()
       .stream()
-      .filter(l -> l.getRentedVehicle())
+      .filter(Leg::getRentedVehicle)
       .mapToInt(this::getLegCost)
       .sum();
 
     Fare fare = new Fare();
-    fare.addFare(FareType.regular, new WrappedCurrency(currency), totalCost);
+    fare.addFare(FareType.regular, currency, totalCost);
     return fare;
   }
 

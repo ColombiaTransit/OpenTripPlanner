@@ -10,6 +10,7 @@ import org.opentripplanner.routing.alertpatch.EntitySelector;
 import org.opentripplanner.routing.alertpatch.TransitAlert;
 import org.opentripplanner.routing.services.TransitAlertService;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.timetable.Direction;
 import org.opentripplanner.transit.service.TransitModel;
 
 /**
@@ -59,7 +60,7 @@ public class TransitAlertServiceImpl implements TransitAlertService {
     Set<TransitAlert> result = new HashSet<>(alerts.get(new EntitySelector.Stop(stopId)));
     if (result.isEmpty()) {
       // Search for alerts on parent-stop
-      if (transitModel != null && transitModel.index != null) {
+      if (transitModel != null && transitModel.getTransitModelIndex() != null) {
         var quay = transitModel.getStopModel().getStopModelIndex().getStopForId(stopId);
         if (quay != null) {
           // TODO - SIRI: Add alerts from parent- and multimodal-stops
@@ -119,7 +120,10 @@ public class TransitAlertServiceImpl implements TransitAlertService {
   }
 
   @Override
-  public Collection<TransitAlert> getDirectionAndRouteAlerts(int directionId, FeedScopedId route) {
-    return alerts.get(new EntitySelector.DirectionAndRoute(directionId, route));
+  public Collection<TransitAlert> getDirectionAndRouteAlerts(
+    Direction direction,
+    FeedScopedId route
+  ) {
+    return alerts.get(new EntitySelector.DirectionAndRoute(direction, route));
   }
 }

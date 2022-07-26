@@ -2,7 +2,7 @@ package org.opentripplanner.transit.service;
 
 import com.google.common.collect.Multimap;
 import gnu.trove.set.TIntSet;
-import java.time.Instant;
+import gnu.trove.set.hash.TIntHashSet;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -34,11 +34,11 @@ import org.opentripplanner.routing.services.TransitAlertService;
 import org.opentripplanner.routing.stoptimes.ArrivalDeparture;
 import org.opentripplanner.routing.stoptimes.StopTimesHelper;
 import org.opentripplanner.routing.vertextype.TransitStopVertex;
+import org.opentripplanner.transit.model.basic.TransitMode;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
 import org.opentripplanner.transit.model.framework.TransitEntity;
 import org.opentripplanner.transit.model.network.GroupOfRoutes;
 import org.opentripplanner.transit.model.network.Route;
-import org.opentripplanner.transit.model.network.TransitMode;
 import org.opentripplanner.transit.model.organization.Agency;
 import org.opentripplanner.transit.model.organization.Operator;
 import org.opentripplanner.transit.model.site.Station;
@@ -65,7 +65,7 @@ public class DefaultTransitService implements TransitEditorService {
 
   public DefaultTransitService(TransitModel transitModel) {
     this.transitModel = transitModel;
-    this.transitModelIndex = transitModel.index;
+    this.transitModelIndex = transitModel.getTransitModelIndex();
   }
 
   /** {@link TransitModel#getFeedIds()} */
@@ -128,10 +128,10 @@ public class DefaultTransitService implements TransitEditorService {
     return this.transitModel.getTripPatternForId(id);
   }
 
-  /** {@link TransitModel#getTripPatterns()} */
+  /** {@link TransitModel#getAllTripPatterns()} ()} */
   @Override
-  public Collection<TripPattern> getTripPatterns() {
-    return this.transitModel.getTripPatterns();
+  public Collection<TripPattern> getAllTripPatterns() {
+    return this.transitModel.getAllTripPatterns();
   }
 
   /** {@link TransitModel#getNotices()} */
@@ -373,10 +373,9 @@ public class DefaultTransitService implements TransitEditorService {
     StopLocation stop,
     boolean includeRealtimeUpdates
   ) {
-    return transitModel.index.getPatternsForStop(
-      stop,
-      includeRealtimeUpdates ? lazyGetTimeTableSnapShot() : null
-    );
+    return transitModel
+      .getTransitModelIndex()
+      .getPatternsForStop(stop, includeRealtimeUpdates ? lazyGetTimeTableSnapShot() : null);
   }
 
   @Override
@@ -511,7 +510,9 @@ public class DefaultTransitService implements TransitEditorService {
 
   @Override
   public TIntSet getServicesRunningForDate(LocalDate serviceDate) {
-    return transitModelIndex.getServiceCodesRunningForDate().get(serviceDate);
+    return transitModelIndex
+      .getServiceCodesRunningForDate()
+      .getOrDefault(serviceDate, new TIntHashSet());
   }
 
   @Override

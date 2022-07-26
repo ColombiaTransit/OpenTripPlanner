@@ -12,9 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.opentripplanner.ConstantsForTests;
-import org.opentripplanner.graph_builder.module.geometry.GeometryAndBlockProcessor;
+import org.opentripplanner.graph_builder.module.geometry.GeometryProcessor;
 import org.opentripplanner.gtfs.GtfsContext;
-import org.opentripplanner.model.calendar.CalendarServiceData;
 import org.opentripplanner.routing.algorithm.astar.AStarBuilder;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.core.RoutingContext;
@@ -46,9 +45,9 @@ public class GraphPathTest {
     graph = new Graph(stopModel, deduplicator);
     transitModel = new TransitModel(stopModel, deduplicator);
 
-    GeometryAndBlockProcessor hl = new GeometryAndBlockProcessor(context);
-    hl.run(graph, transitModel);
-    transitModel.putService(CalendarServiceData.class, context.getCalendarServiceData());
+    GeometryProcessor hl = new GeometryProcessor(context);
+    hl.run(transitModel);
+    transitModel.updateCalendarServiceData(true, context.getCalendarServiceData(), null);
   }
 
   @Test

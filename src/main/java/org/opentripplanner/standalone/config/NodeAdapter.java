@@ -3,9 +3,11 @@ package org.opentripplanner.standalone.config;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -303,6 +305,21 @@ public class NodeAdapter {
     return FeedScopedId.parseId(asText(paramName));
   }
 
+  public List<FeedScopedId> asFeedScopedIds(String paramName, List<FeedScopedId> defaultValues) {
+    JsonNode array = param(paramName);
+
+    if (array.isMissingNode()) {
+      return defaultValues;
+    }
+    assertIsArray(paramName, array);
+
+    List<FeedScopedId> ids = new ArrayList<>();
+    for (JsonNode it : array) {
+      ids.add(FeedScopedId.parseId(it.asText()));
+    }
+    return ids;
+  }
+
   public Locale asLocale(String paramName, Locale defaultValue) {
     if (!exist(paramName)) {
       return defaultValue;
@@ -422,6 +439,27 @@ public class NodeAdapter {
         "'. The value '" +
         text +
         "' is not a valid function on the form \"a + b x\" (\"2.0 + 7.1 x\")." +
+        "Source: " +
+        source +
+        "."
+      );
+    }
+  }
+
+  public ZoneId asZoneId(String paramName, ZoneId defaultValue) {
+    if (!exist(paramName)) {
+      return defaultValue;
+    }
+    final String zoneId = param(paramName).asText();
+    try {
+      return ZoneId.of(zoneId);
+    } catch (DateTimeException e) {
+      throw new OtpAppException(
+        "Unable to parse parameter '" +
+        fullPath(paramName) +
+        "'. The value '" +
+        zoneId +
+        "' is is not a valid Zone ID, it should be parsable by java.time.ZoneId class. " +
         "Source: " +
         source +
         "."

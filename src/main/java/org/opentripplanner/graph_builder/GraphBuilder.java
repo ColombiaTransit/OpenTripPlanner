@@ -1,9 +1,9 @@
 package org.opentripplanner.graph_builder;
 
-import static org.opentripplanner.datastore.FileType.DEM;
-import static org.opentripplanner.datastore.FileType.GTFS;
-import static org.opentripplanner.datastore.FileType.NETEX;
-import static org.opentripplanner.datastore.FileType.OSM;
+import static org.opentripplanner.datastore.api.FileType.DEM;
+import static org.opentripplanner.datastore.api.FileType.GTFS;
+import static org.opentripplanner.datastore.api.FileType.NETEX;
+import static org.opentripplanner.datastore.api.FileType.OSM;
 import static org.opentripplanner.netex.configure.NetexConfig.netexModule;
 
 import com.google.common.collect.Lists;
@@ -12,8 +12,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import org.opentripplanner.datastore.CompositeDataSource;
-import org.opentripplanner.datastore.DataSource;
+import org.opentripplanner.datastore.api.CompositeDataSource;
+import org.opentripplanner.datastore.api.DataSource;
 import org.opentripplanner.ext.dataoverlay.configure.DataOverlayFactory;
 import org.opentripplanner.ext.flex.FlexLocationsToStreetEdgesMapper;
 import org.opentripplanner.ext.transferanalyzer.DirectTransferAnalyzer;
@@ -24,6 +24,7 @@ import org.opentripplanner.graph_builder.module.GtfsModule;
 import org.opentripplanner.graph_builder.module.OsmBoardingLocationsModule;
 import org.opentripplanner.graph_builder.module.PruneNoThruIslands;
 import org.opentripplanner.graph_builder.module.StreetLinkerModule;
+import org.opentripplanner.graph_builder.module.TimeZoneAdjusterModule;
 import org.opentripplanner.graph_builder.module.map.BusRouteStreetMatcher;
 import org.opentripplanner.graph_builder.module.ned.DegreeGridNEDTileSource;
 import org.opentripplanner.graph_builder.module.ned.ElevationModule;
@@ -32,6 +33,7 @@ import org.opentripplanner.graph_builder.module.ned.NEDGridCoverageFactoryImpl;
 import org.opentripplanner.graph_builder.module.osm.OpenStreetMapModule;
 import org.opentripplanner.graph_builder.services.GraphBuilderModule;
 import org.opentripplanner.graph_builder.services.ned.ElevationGridCoverageFactory;
+import org.opentripplanner.model.calendar.ServiceDateInterval;
 import org.opentripplanner.openstreetmap.OpenStreetMapProvider;
 import org.opentripplanner.routing.api.request.RoutingRequest;
 import org.opentripplanner.routing.graph.Graph;
@@ -42,6 +44,7 @@ import org.opentripplanner.transit.service.StopModel;
 import org.opentripplanner.transit.service.TransitModel;
 import org.opentripplanner.util.OTPFeature;
 import org.opentripplanner.util.OtpAppException;
+import org.opentripplanner.util.time.DurationUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,11 +64,13 @@ public class GraphBuilder implements Runnable {
 
   private boolean hasTransitData = false;
 
-  private GraphBuilder(Graph baseGraph) {
+  private GraphBuilder(Graph baseGraph, ServiceDateInterval serviceDateInterval) {
     if (baseGraph == null) {
       StopModel stopModel = new StopModel();
       Deduplicator deduplicator = new Deduplicator();
-      this.graph = new Graph(stopModel, deduplicator);
+      Graph graph = new Graph(stopModel, deduplicator);
+      graph.initOpeningHoursCalendarService(serviceDateInterval);
+      this.graph = graph;
       this.transitModel = new TransitModel(stopModel, deduplicator);
     } else {
       this.graph = baseGraph;
@@ -90,8 +95,9 @@ public class GraphBuilder implements Runnable {
     boolean hasNetex = dataSources.has(NETEX);
     boolean hasTransitData = hasGtfs || hasNetex;
 
-    GraphBuilder graphBuilder = new GraphBuilder(baseGraph);
+    GraphBuilder graphBuilder = new GraphBuilder(baseGraph, config.getTransitServicePeriod());
     graphBuilder.hasTransitData = hasTransitData;
+    graphBuilder.transitModel.initTimeZone(config.timeZone);
 
     if (hasOsm) {
       List<OpenStreetMapProvider> osmProviders = Lists.newArrayList();
@@ -123,7 +129,6 @@ public class GraphBuilder implements Runnable {
         }
         gtfsBundle.parentStationTransfers = config.stationTransfers;
         gtfsBundle.subwayAccessTime = config.getSubwayAccessTimeSeconds();
-        gtfsBundle.maxInterlineDistance = config.maxInterlineDistance;
         gtfsBundle.setMaxStopToShapeSnapDistance(config.maxStopToShapeSnapDistance);
         gtfsBundles.add(gtfsBundle);
       }
@@ -131,13 +136,18 @@ public class GraphBuilder implements Runnable {
         gtfsBundles,
         config.getTransitServicePeriod(),
         config.fareServiceFactory,
-        config.discardMinTransferTimes
+        config.discardMinTransferTimes,
+        config.maxInterlineDistance
       );
       graphBuilder.addModule(gtfsModule);
     }
 
     if (hasNetex) {
       graphBuilder.addModule(netexModule(config, dataSources.get(NETEX)));
+    }
+
+    if (hasTransitData && graphBuilder.transitModel.getAgencyTimeZones().size() > 1) {
+      graphBuilder.addModule(new TimeZoneAdjusterModule());
     }
 
     if (hasTransitData && (hasOsm || graphBuilder.graph.hasStreets)) {
@@ -279,7 +289,8 @@ public class GraphBuilder implements Runnable {
 
     long endTime = System.currentTimeMillis();
     LOG.info(
-      String.format("Graph building took %.1f minutes.", (endTime - startTime) / 1000 / 60.0)
+      "Graph building took {}.",
+      DurationUtils.durationToStr(Duration.ofMillis(endTime - startTime))
     );
     LOG.info("Main graph size: |V|={} |E|={}", graph.countVertices(), graph.countEdges());
   }
@@ -298,7 +309,7 @@ public class GraphBuilder implements Runnable {
    * configuration, for example, then this function will throw a {@link OtpAppException}.
    */
   private void validate() {
-    if (hasTransitData() && !transitModel.hasTransit) {
+    if (hasTransitData() && !transitModel.hasTransit()) {
       throw new OtpAppException(
         "The provided transit data have no trips within the configured transit " +
         "service period. See build config 'transitServiceStart' and " +

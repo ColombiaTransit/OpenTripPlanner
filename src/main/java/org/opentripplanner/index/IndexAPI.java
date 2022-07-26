@@ -483,7 +483,7 @@ public class IndexAPI {
   @GET
   @Path("/patterns")
   public List<ApiPatternShort> getPatterns() {
-    Collection<TripPattern> patterns = createTransitService().getTripPatterns();
+    Collection<TripPattern> patterns = createTransitService().getAllTripPatterns();
     return TripPatternMapper.mapToApiShort(patterns);
   }
 
@@ -535,7 +535,7 @@ public class IndexAPI {
     return alertMapper.mapToApi(
       transitService
         .getTransitAlertService()
-        .getDirectionAndRouteAlerts(pattern.getDirection().gtfsCode, pattern.getRoute().getId())
+        .getDirectionAndRouteAlerts(pattern.getDirection(), pattern.getRoute().getId())
     );
   }
 

@@ -15,7 +15,7 @@ jobs:
 
           - location: colombia # all of Colombia            
             osm-url: https://download.geofabrik.de/south-america/colombia-220824.osm.pbf
-            transit-url: ${{ secrets.GTFS }}
+            transit-url: https://api.colombiatransit.co/colombia-gtfs.zip
             transit-filename: colombia-gtfs.zip
             iterations: 1
             jfr-delay: "50s"

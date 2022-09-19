@@ -7,6 +7,7 @@ import java.util.List;
 import org.opentripplanner.routing.algorithm.astar.NegativeWeightException;
 import org.opentripplanner.routing.api.request.RouteRequest;
 import org.opentripplanner.routing.api.request.preference.RoutingPreferences;
+import org.opentripplanner.routing.core.intersection_model.IntersectionTraversalCalculator;
 import org.opentripplanner.routing.edgetype.VehicleRentalEdge;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
@@ -155,7 +156,7 @@ public class State implements Cloneable {
       stateData.vehicleRentalState == VehicleRentalState.HAVE_RENTED ||
       stateData.vehicleRentalState == VehicleRentalState.RENTING_FLOATING ||
       (
-        getOptions().allowKeepingRentedVehicleAtDestination &&
+        getOptions().journey().rental().allowArrivingInRentedVehicleAtDestination() &&
         stateData.mayKeepRentedVehicleAtDestination &&
         stateData.vehicleRentalState == VehicleRentalState.RENTING_FROM_STATION
       )
@@ -367,6 +368,10 @@ public class State implements Cloneable {
     return stateData.mayKeepRentedVehicleAtDestination;
   }
 
+  public IntersectionTraversalCalculator intersectionTraversalCalculator() {
+    return stateData.intersectionTraversalCalculator;
+  }
+
   protected State clone() {
     State ret;
     try {
@@ -413,7 +418,9 @@ public class State implements Cloneable {
   private State reversedClone() {
     // We no longer compensate for schedule slack (minTransferTime) here.
     // It is distributed symmetrically over all preboard and prealight edges.
-    var newStateData = StateData.getInitialStateData(stateData.opt.reversedClone());
+    var reversedRequest = stateData.opt.copyOfReversed();
+    reversedRequest.preferences().rental().setUseAvailabilityInformation(false);
+    var newStateData = StateData.getInitialStateData(reversedRequest);
     // TODO Check if those three lines are needed:
     // TODO Yes they are. We should instead pass the stateData as such after removing startTime, opt
     // and rctx from it.

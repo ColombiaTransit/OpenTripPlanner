@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.opentripplanner.graph_builder.DataImportIssueStore.noopIssueStore;
+import static org.opentripplanner.routing.api.request.StreetMode.BIKE;
+import static org.opentripplanner.routing.api.request.StreetMode.CAR;
 
 import java.io.File;
 import java.net.URLDecoder;
@@ -19,11 +21,11 @@ import org.opentripplanner.datastore.file.FileDataSource;
 import org.opentripplanner.graph_builder.ConfiguredDataSource;
 import org.opentripplanner.openstreetmap.OpenStreetMapProvider;
 import org.opentripplanner.routing.algorithm.astar.AStarBuilder;
+import org.opentripplanner.routing.api.request.RequestModes;
 import org.opentripplanner.routing.api.request.RouteRequest;
 import org.opentripplanner.routing.core.RoutingContext;
-import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.core.TraverseModeSet;
-import org.opentripplanner.routing.core.intersection_model.ConstantIntersectionTraversalCostModel;
+import org.opentripplanner.routing.core.intersection_model.ConstantIntersectionTraversalCalculator;
+import org.opentripplanner.routing.core.intersection_model.IntersectionTraversalCalculator;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
@@ -41,6 +43,9 @@ public class TriangleInequalityTest {
 
   private static Graph graph;
   private static TransitModel transitModel;
+  private final IntersectionTraversalCalculator calculator = new ConstantIntersectionTraversalCalculator(
+    10.0
+  );
 
   private Vertex start;
   private Vertex end;
@@ -93,25 +98,25 @@ public class TriangleInequalityTest {
 
   @Test
   public void testTriangleInequalityWalkingOnly() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK);
+    RequestModes modes = RequestModes.of().clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityDrivingOnly() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.CAR);
+    RequestModes modes = RequestModes.of().withDirectMode(CAR).clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityWalkTransit() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK, TraverseMode.TRANSIT);
+    RequestModes modes = RequestModes.defaultRequestModes();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityWalkBike() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK, TraverseMode.BICYCLE);
+    RequestModes modes = RequestModes.of().withDirectMode(BIKE).clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
@@ -122,25 +127,25 @@ public class TriangleInequalityTest {
 
   @Test
   public void testTriangleInequalityWalkingOnlyBasicSPT() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK);
+    RequestModes modes = RequestModes.of().clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityDrivingOnlyBasicSPT() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.CAR);
+    RequestModes modes = RequestModes.of().withDirectMode(CAR).clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityWalkTransitBasicSPT() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK, TraverseMode.TRANSIT);
+    RequestModes modes = RequestModes.defaultRequestModes();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityWalkBikeBasicSPT() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK, TraverseMode.BICYCLE);
+    RequestModes modes = RequestModes.of().withDirectMode(BIKE).clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
@@ -151,25 +156,25 @@ public class TriangleInequalityTest {
 
   @Test
   public void testTriangleInequalityWalkingOnlyMultiSPT() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK);
+    RequestModes modes = RequestModes.of().clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityDrivingOnlyMultiSPT() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.CAR);
+    RequestModes modes = RequestModes.of().withDirectMode(CAR).clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityWalkTransitMultiSPT() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK, TraverseMode.TRANSIT);
+    RequestModes modes = RequestModes.defaultRequestModes();
     checkTriangleInequality(modes);
   }
 
   @Test
   public void testTriangleInequalityWalkBikeMultiSPT() {
-    TraverseModeSet modes = new TraverseModeSet(TraverseMode.WALK, TraverseMode.BICYCLE);
+    RequestModes modes = RequestModes.of().withDirectMode(BIKE).clearTransitModes().build();
     checkTriangleInequality(modes);
   }
 
@@ -178,6 +183,7 @@ public class TriangleInequalityTest {
       .oneToOne()
       .setOriginBackEdge(startBackEdge)
       .setContext(new RoutingContext(options, graph, u, v))
+      .setIntersectionTraversalCalculator(calculator)
       .getShortestPathTree()
       .getPath(v);
   }
@@ -186,7 +192,7 @@ public class TriangleInequalityTest {
     checkTriangleInequality(null);
   }
 
-  private void checkTriangleInequality(TraverseModeSet traverseModes) {
+  private void checkTriangleInequality(RequestModes modes) {
     assertNotNull(start);
     assertNotNull(end);
 
@@ -200,16 +206,15 @@ public class TriangleInequalityTest {
     prototypeOptions.preferences().walk().setSpeed(1.0);
     prototypeOptions.preferences().bike().setSpeed(1.0);
 
-    graph.setIntersectionTraversalCostModel(new ConstantIntersectionTraversalCostModel(10.0));
-
-    if (traverseModes != null) {
-      prototypeOptions.setStreetSubRequestModes(traverseModes);
+    if (modes != null) {
+      prototypeOptions.journey().setModes(modes);
     }
 
     ShortestPathTree tree = AStarBuilder
       .oneToOne()
       .setDominanceFunction(new DominanceFunction.EarliestArrival())
       .setContext(new RoutingContext(prototypeOptions, graph, start, end))
+      .setIntersectionTraversalCalculator(calculator)
       .getShortestPathTree();
 
     GraphPath path = tree.getPath(end);

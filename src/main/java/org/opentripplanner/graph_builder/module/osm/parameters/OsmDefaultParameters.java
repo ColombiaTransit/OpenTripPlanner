@@ -1,13 +1,12 @@
-package org.opentripplanner.standalone.config.feed;
+package org.opentripplanner.graph_builder.module.osm.parameters;
 
 import java.time.ZoneId;
 import org.opentripplanner.graph_builder.module.osm.WayPropertySetSource;
-import org.opentripplanner.standalone.config.NodeAdapter;
 
 /**
  * Default configuration for OpenStreetMap feeds.
  */
-public class OsmDefaultsConfig {
+public class OsmDefaultParameters {
 
   /**
    * The default set of rules for mapping OSM tags.
@@ -19,18 +18,11 @@ public class OsmDefaultsConfig {
    */
   public final ZoneId timeZone;
 
-  public OsmDefaultsConfig() {
+  public OsmDefaultParameters() {
     this(null, null);
   }
 
-  public OsmDefaultsConfig(NodeAdapter config) {
-    this(
-      WayPropertySetSource.fromConfig(config.asText("osmTagMapping", "default")),
-      config.asZoneId("timeZone", null)
-    );
-  }
-
-  public OsmDefaultsConfig(WayPropertySetSource osmWayPropertySetSource, ZoneId timeZone) {
+  public OsmDefaultParameters(WayPropertySetSource osmWayPropertySetSource, ZoneId timeZone) {
     this.osmWayPropertySetSource =
       osmWayPropertySetSource != null
         ? osmWayPropertySetSource

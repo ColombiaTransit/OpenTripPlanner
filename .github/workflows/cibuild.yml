@@ -58,6 +58,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: mvn --batch-mode deploy --settings maven-settings.xml -DskipTests -DGITHUB_REPOSITORY=$GITHUB_REPOSITORY -P prettierCheck
+      
+      - name: Upload math result for ubuntu build
+        if: github.repository_owner == 'ColombiaTransit' && matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v3
+        with:
+           name: ct-otp
+           path: target/*-shaded.jar
 
   container-image:
     if: github.repository_owner == 'opentripplanner' && github.event_name == 'push' && github.ref == 'refs/heads/dev-2.x'

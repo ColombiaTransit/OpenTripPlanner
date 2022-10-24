@@ -24,7 +24,7 @@ jobs:
             iterations: 4
             jfr-delay: "35s"
 
-          - location: baden-wuerttemberg # German state of Baden-Württemberg: https://en.wikipedia.org/wiki/Baden-W%C3%BCrttemberg
+          - location: germany # German state of Baden-Württemberg: https://en.wikipedia.org/wiki/Baden-W%C3%BCrttemberg
             iterations: 4
             jfr-delay: "50s"
 

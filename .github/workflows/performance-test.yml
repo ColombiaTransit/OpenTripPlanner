@@ -20,6 +20,14 @@ jobs:
             iterations: 1
             jfr-delay: "50s"
 
+          - location: norway
+            iterations: 4
+            jfr-delay: "35s"
+
+          - location: baden-wuerttemberg # German state of Baden-Württemberg: https://en.wikipedia.org/wiki/Baden-W%C3%BCrttemberg
+            iterations: 4
+            jfr-delay: "50s"
+
     steps:
       - uses: actions/checkout@v2.3.2
         with:
@@ -41,30 +49,12 @@ jobs:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
-      - name: Cache graph input files
-        uses: actions/cache@v2
-        with:
-          path: |
-            graph/*.pbf
-            graph/*.zip
-          key: graph-${{ matrix.transit-url}}-${{ matrix.osm-url}}
-
       - name: Build jar
         run: mvn -DskipTests --batch-mode package -P prettierSkip
 
-      - name: Download OSM & Netex data
-        run: |
-          mkdir -p graph
-          if [ "${{ matrix.osm-url }}" = "" ];
-          then
-            echo "No OSM download specified. Skipping..."
-          else
-            wget ${{ matrix.osm-url }} -O graph/osm.pbf --no-clobber -q --show-progress --progress=bar:force || true
-          fi
-          wget ${{ matrix.transit-url }} -O graph/${{ matrix.transit-filename }} --no-clobber -q --show-progress --progress=bar:force || true
-
       - name: Build graph
         run: |
+          mkdir graph
           cp test/performance/${{ matrix.location }}/build-config.json graph/build-config.json
           cp target/otp-*-SNAPSHOT-shaded.jar otp.jar
           java -Xmx32G -jar otp.jar --build --save graph

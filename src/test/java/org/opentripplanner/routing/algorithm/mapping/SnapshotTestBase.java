@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.micrometer.core.instrument.Metrics;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -34,7 +33,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.opentripplanner.ConstantsForTests;
-import org.opentripplanner.OtpModel;
+import org.opentripplanner.TestOtpModel;
+import org.opentripplanner.TestServerContext;
 import org.opentripplanner.api.mapping.ItineraryMapper;
 import org.opentripplanner.api.parameter.ApiRequestMode;
 import org.opentripplanner.api.parameter.QualifiedMode;
@@ -42,12 +42,11 @@ import org.opentripplanner.api.parameter.Qualifier;
 import org.opentripplanner.model.GenericLocation;
 import org.opentripplanner.model.plan.Itinerary;
 import org.opentripplanner.model.plan.Leg;
-import org.opentripplanner.routing.RoutingService;
-import org.opentripplanner.routing.api.request.RoutingRequest;
+import org.opentripplanner.model.plan.StreetLeg;
+import org.opentripplanner.routing.api.request.RouteRequest;
 import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.api.response.RoutingResponse;
-import org.opentripplanner.standalone.config.RouterConfig;
-import org.opentripplanner.standalone.server.Router;
+import org.opentripplanner.standalone.api.OtpServerRequestContext;
 import org.opentripplanner.transit.model.basic.MainAndSubMode;
 import org.opentripplanner.transit.model.basic.TransitMode;
 import org.opentripplanner.util.TestUtils;
@@ -70,7 +69,7 @@ public abstract class SnapshotTestBase {
 
   static final boolean verbose = Boolean.getBoolean("otp.test.verbose");
 
-  protected Router router;
+  protected OtpServerRequestContext serverContext;
 
   public static void loadGraphBeforeClass(boolean withElevation) {
     if (withElevation) {
@@ -80,27 +79,20 @@ public abstract class SnapshotTestBase {
     }
   }
 
-  protected Router getRouter() {
-    if (router == null) {
-      OtpModel otpModel = getGraph();
-      router =
-        new Router(
-          otpModel.graph,
-          otpModel.transitModel,
-          RouterConfig.DEFAULT,
-          Metrics.globalRegistry
-        );
-      router.startup();
+  protected OtpServerRequestContext serverContext() {
+    if (serverContext == null) {
+      TestOtpModel model = getGraph();
+      serverContext = TestServerContext.createServerContext(model.graph(), model.transitModel());
     }
 
-    return router;
+    return serverContext;
   }
 
-  protected OtpModel getGraph() {
+  protected TestOtpModel getGraph() {
     return ConstantsForTests.getInstance().getCachedPortlandGraph();
   }
 
-  protected RoutingRequest createTestRequest(
+  protected RouteRequest createTestRequest(
     int year,
     int month,
     int day,
@@ -108,12 +100,12 @@ public abstract class SnapshotTestBase {
     int minute,
     int second
   ) {
-    Router router = getRouter();
+    OtpServerRequestContext serverContext = serverContext();
 
-    RoutingRequest request = router.copyDefaultRoutingRequest();
+    RouteRequest request = serverContext.defaultRouteRequest();
     request.setDateTime(
       TestUtils.dateInstant(
-        router.transitModel.getTimeZone().getId(),
+        serverContext.transitService().getTimeZone().getId(),
         year,
         month,
         day,
@@ -122,9 +114,10 @@ public abstract class SnapshotTestBase {
         second
       )
     );
-    request.maxTransfers = 6;
-    request.numItineraries = 6;
-    request.searchWindow = Duration.ofHours(5);
+
+    request.withPreferences(pref -> pref.withTransfer(tx -> tx.withMaxTransfers(6)));
+    request.setNumItineraries(6);
+    request.setSearchWindow(Duration.ofHours(5));
 
     return request;
   }
@@ -140,19 +133,21 @@ public abstract class SnapshotTestBase {
     for (int i = 0; i < itineraries.size(); i++) {
       Itinerary itinerary = itineraries.get(i);
       System.out.printf(
-        "Itinerary %2d - duration: %s [%5d] (effective: %s [%5d]) - wait time: %d seconds, transit time: %d seconds\n",
+        "Itinerary %2d - duration: %s [%5s] (effective: %s [%5s]) - wait time: %s, transit time: %s \n",
         i,
-        TimeUtils.timeToStrCompact(itinerary.getDurationSeconds()),
-        itinerary.getDurationSeconds(),
-        TimeUtils.timeToStrCompact(itinerary.effectiveDurationSeconds()),
-        itinerary.effectiveDurationSeconds(),
-        itinerary.getWaitingTimeSeconds(),
-        itinerary.getTransitTimeSeconds()
+        TimeUtils.durationToStrCompact(itinerary.getDuration()),
+        itinerary.getDuration(),
+        TimeUtils.durationToStrCompact(itinerary.effectiveDuration()),
+        itinerary.effectiveDuration(),
+        itinerary.getWaitingDuration(),
+        itinerary.getTransitDuration()
       );
 
       for (int j = 0; j < itinerary.getLegs().size(); j++) {
         Leg leg = itinerary.getLegs().get(j);
-        String mode = leg.getMode().isTransit() ? "T" : leg.getMode().name().substring(0, 1);
+        String mode = (leg instanceof StreetLeg stLeg)
+          ? stLeg.getMode().name().substring(0, 1)
+          : "T";
         System.out.printf(
           " - leg %2d - %52.52s %9s --%s-> %-9s %-52.52s\n",
           j,
@@ -177,19 +172,15 @@ public abstract class SnapshotTestBase {
     );
   }
 
-  protected void expectRequestResponseToMatchSnapshot(RoutingRequest request) {
-    Router router = getRouter();
-
-    List<Itinerary> itineraries = retrieveItineraries(request, router);
+  protected void expectRequestResponseToMatchSnapshot(RouteRequest request) {
+    List<Itinerary> itineraries = retrieveItineraries(request);
 
     logDebugInformationOnFailure(request, () -> expectItinerariesToMatchSnapshot(itineraries));
   }
 
-  protected void expectArriveByToMatchDepartAtAndSnapshot(RoutingRequest request) {
-    Router router = getRouter();
-
-    RoutingRequest departAt = request.clone();
-    List<Itinerary> departByItineraries = retrieveItineraries(departAt, router);
+  protected void expectArriveByToMatchDepartAtAndSnapshot(RouteRequest request) {
+    RouteRequest departAt = request.clone();
+    List<Itinerary> departByItineraries = retrieveItineraries(departAt);
 
     logDebugInformationOnFailure(request, () -> assertFalse(departByItineraries.isEmpty()));
 
@@ -198,11 +189,11 @@ public abstract class SnapshotTestBase {
       () -> expectItinerariesToMatchSnapshot(departByItineraries)
     );
 
-    RoutingRequest arriveBy = request.clone();
+    RouteRequest arriveBy = request.clone();
     arriveBy.setArriveBy(true);
     arriveBy.setDateTime(departByItineraries.get(0).lastLeg().getEndTime().toInstant());
 
-    List<Itinerary> arriveByItineraries = retrieveItineraries(arriveBy, router);
+    List<Itinerary> arriveByItineraries = retrieveItineraries(arriveBy);
 
     var departAtItinerary = departByItineraries.get(0);
     var arriveByItinerary = arriveByItineraries.get(0);
@@ -223,7 +214,7 @@ public abstract class SnapshotTestBase {
       .toMatchSnapshot();
   }
 
-  protected void logDebugInformationOnFailure(RoutingRequest request, Runnable task) {
+  protected void logDebugInformationOnFailure(RouteRequest request, Runnable task) {
     try {
       task.run();
     } catch (Throwable e) {
@@ -263,10 +254,9 @@ public abstract class SnapshotTestBase {
     return snapshotSerializer.apply(new Object[] { object });
   }
 
-  private List<Itinerary> retrieveItineraries(RoutingRequest request, Router router) {
+  private List<Itinerary> retrieveItineraries(RouteRequest request) {
     long startMillis = System.currentTimeMillis();
-    RoutingService routingService = new RoutingService(router.graph, router.transitModel);
-    RoutingResponse response = routingService.route(request, router);
+    RoutingResponse response = serverContext.routingService().route(request);
 
     List<Itinerary> itineraries = response.getTripPlan().itineraries;
 
@@ -275,27 +265,27 @@ public abstract class SnapshotTestBase {
         itineraries,
         startMillis,
         System.currentTimeMillis(),
-        router.transitModel.getTimeZone()
+        serverContext.transitService().getTimeZone()
       );
     }
     return itineraries;
   }
 
-  private String createDebugUrlForRequest(RoutingRequest request) {
+  private String createDebugUrlForRequest(RouteRequest request) {
     var dateTime = Instant
-      .ofEpochSecond(request.getDateTime().getEpochSecond())
-      .atZone(getRouter().transitModel.getTimeZone())
+      .ofEpochSecond(request.dateTime().getEpochSecond())
+      .atZone(serverContext().transitService().getTimeZone())
       .toLocalDateTime();
 
-    var transitModes = mapModes(request.modes.transitModes);
+    var transitModes = mapModes(request.journey().transit().modes());
 
     var modes = Stream
       .concat(
         Stream
           .of(
-            asQualifiedMode(request.modes.directMode, false),
-            asQualifiedMode(request.modes.accessMode, false),
-            asQualifiedMode(request.modes.egressMode, true)
+            asQualifiedMode(request.journey().direct().mode(), false),
+            asQualifiedMode(request.journey().access().mode(), false),
+            asQualifiedMode(request.journey().egress().mode(), true)
           )
           .filter(Objects::nonNull)
           .map(QualifiedMode::toString),
@@ -306,13 +296,13 @@ public abstract class SnapshotTestBase {
 
     return String.format(
       "http://localhost:8080/?module=planner&fromPlace=%s&toPlace=%s&date=%s&time=%s&mode=%s&arriveBy=%s&wheelchair=%s",
-      formatPlace(request.from),
-      formatPlace(request.to),
+      formatPlace(request.from()),
+      formatPlace(request.to()),
       dateTime.toLocalDate().format(apiDateFormatter),
       dateTime.toLocalTime().format(apiTimeFormatter),
       modes,
-      request.arriveBy,
-      request.wheelchairAccessibility
+      request.arriveBy(),
+      request.preferences().wheelchair()
     );
   }
 

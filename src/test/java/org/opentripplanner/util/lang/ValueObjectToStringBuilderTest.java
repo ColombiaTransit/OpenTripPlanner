@@ -2,8 +2,8 @@ package org.opentripplanner.util.lang;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.Duration;
 import org.junit.jupiter.api.Test;
-import org.opentripplanner.util.lang.ValueObjectToStringBuilder;
 
 public class ValueObjectToStringBuilderTest {
 
@@ -99,25 +99,34 @@ public class ValueObjectToStringBuilderTest {
 
   @Test
   public void addDuration() {
-    assertEquals("35s", subject().addDuration(35).toString());
-    assertEquals("1d2h50m45s", subject().addDuration((26 * 60 + 50) * 60 + 45).toString());
+    assertEquals("35s", subject().addDurationSec(35).toString());
+    assertEquals("1d2h50m45s", subject().addDurationSec((26 * 60 + 50) * 60 + 45).toString());
+    assertEquals("35s", subject().addDuration(Duration.ofSeconds(35)).toString());
+
+    assertEquals("", subject().skipNull().addDurationSec(null).toString());
     assertEquals("", subject().skipNull().addDuration(null).toString());
   }
 
   @Test
   public void addCost() {
+    assertEquals("null", subject().addCostCenti(null).toString());
+    assertEquals("", subject().skipNull().addCostCenti(null).toString());
+    assertEquals("$-0.01", subject().addCostCenti(-1).toString());
+    assertEquals("$0", subject().addCostCenti(0).toString());
+    assertEquals("$0.01", subject().addCostCenti(1).toString());
+    assertEquals("$1", subject().addCostCenti(100).toString());
+    assertEquals("$100.01", subject().addCostCenti(10001).toString());
+
     assertEquals("null", subject().addCost(null).toString());
     assertEquals("", subject().skipNull().addCost(null).toString());
-    assertEquals("$-0.01", subject().addCost(-1).toString());
+    assertEquals("$-1", subject().addCost(-1).toString());
     assertEquals("$0", subject().addCost(0).toString());
-    assertEquals("$0.01", subject().addCost(1).toString());
-    assertEquals("$1", subject().addCost(100).toString());
-    assertEquals("$100.01", subject().addCost(10001).toString());
+    assertEquals("$100", subject().addCost(100).toString());
 
-    assertEquals("null", subject().addCost(null, "pip").toString());
-    assertEquals("", subject().skipNull().addCost(null, "pip").toString());
-    assertEquals("$-0.01pip", subject().addCost(-1, "pip").toString());
-    assertEquals("$1pip", subject().addCost(100, "pip").toString());
+    assertEquals("null", subject().addCostCenti(null, "pip").toString());
+    assertEquals("", subject().skipNull().addCostCenti(null, "pip").toString());
+    assertEquals("$-0.01pip", subject().addCostCenti(-1, "pip").toString());
+    assertEquals("$1pip", subject().addCostCenti(100, "pip").toString());
   }
 
   private ValueObjectToStringBuilder subject() {

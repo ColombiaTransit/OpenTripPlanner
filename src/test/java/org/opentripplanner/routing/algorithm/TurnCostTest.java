@@ -10,14 +10,15 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.opentripplanner.common.TurnRestriction;
 import org.opentripplanner.common.TurnRestrictionType;
-import org.opentripplanner.common.geometry.GeometryUtils;
 import org.opentripplanner.routing.algorithm.astar.AStarBuilder;
-import org.opentripplanner.routing.api.request.RoutingRequest;
-import org.opentripplanner.routing.core.RoutingContext;
+import org.opentripplanner.routing.api.request.RouteRequest;
+import org.opentripplanner.routing.api.request.StreetMode;
+import org.opentripplanner.routing.api.request.request.StreetRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.TraverseMode;
 import org.opentripplanner.routing.core.TraverseModeSet;
-import org.opentripplanner.routing.core.intersection_model.ConstantIntersectionTraversalCostModel;
+import org.opentripplanner.routing.core.intersection_model.ConstantIntersectionTraversalCalculator;
+import org.opentripplanner.routing.core.intersection_model.IntersectionTraversalCalculator;
 import org.opentripplanner.routing.edgetype.StreetEdge;
 import org.opentripplanner.routing.edgetype.StreetTraversalPermission;
 import org.opentripplanner.routing.graph.Graph;
@@ -26,6 +27,7 @@ import org.opentripplanner.routing.spt.GraphPath;
 import org.opentripplanner.routing.spt.ShortestPathTree;
 import org.opentripplanner.routing.vertextype.IntersectionVertex;
 import org.opentripplanner.routing.vertextype.StreetVertex;
+import org.opentripplanner.util.geometry.GeometryUtils;
 
 public class TurnCostTest {
 
@@ -37,7 +39,9 @@ public class TurnCostTest {
 
   private StreetEdge maple_main1, broad1_2;
 
-  private RoutingRequest proto;
+  private RouteRequest proto;
+
+  private IntersectionTraversalCalculator calculator;
 
   @BeforeEach
   public void before() {
@@ -89,35 +93,32 @@ public class TurnCostTest {
     bottomLeft = broad3;
 
     // Make a prototype routing request.
-    proto = new RoutingRequest();
-    proto.carSpeed = 1.0;
-    proto.walkSpeed = 1.0;
-    proto.bikeSpeed = 1.0;
-    proto.turnReluctance = (1.0);
-    proto.setNonTransitReluctance(1.0);
-    proto.stairsReluctance = (1.0);
+    proto = new RouteRequest();
+    proto.withPreferences(preferences ->
+      preferences
+        .withCar(it -> it.withSpeed(1.0).withReluctance(1.0))
+        .withBike(bike -> bike.withSpeed(1.0).withReluctance(1.0))
+        .withWalk(walk -> walk.withSpeed(1.0).withStairsReluctance(1.0).withReluctance(1.0))
+        .withStreet(it -> it.withTurnReluctance(1.0))
+    );
 
     // Turn costs are all 0 by default.
-    graph.setIntersectionTraversalCostModel(new ConstantIntersectionTraversalCostModel(0.0));
+    calculator = new ConstantIntersectionTraversalCalculator(0.0);
   }
 
   @Test
   public void testForwardDefaultNoTurnCosts() {
     // Without turn costs, this path costs 2x100 + 2x50 = 300.
-    checkForwardRouteDuration(new RoutingContext(proto, graph, topRight, bottomLeft), 300);
+    checkForwardRouteDuration(proto, StreetMode.WALK, topRight, bottomLeft, 300);
   }
 
   @Test
   public void testForwardDefaultConstTurnCosts() {
-    RoutingRequest options = proto.clone();
-    graph.setIntersectionTraversalCostModel(new ConstantIntersectionTraversalCostModel(10.0));
+    calculator = new ConstantIntersectionTraversalCalculator(10.0);
 
     // Without turn costs, this path costs 2x100 + 2x50 = 300.
     // Since we traverse 3 intersections, the total cost should be 330.
-    GraphPath path = checkForwardRouteDuration(
-      new RoutingContext(options, graph, topRight, bottomLeft),
-      330
-    );
+    GraphPath path = checkForwardRouteDuration(proto, StreetMode.WALK, topRight, bottomLeft, 330);
 
     // The intersection traversal cost should be applied to the state *after*
     // the intersection itself.
@@ -139,14 +140,10 @@ public class TurnCostTest {
 
   @Test
   public void testForwardCarNoTurnCosts() {
-    RoutingRequest options = proto.clone();
-    options.setMode(TraverseMode.CAR);
+    RouteRequest options = proto.clone();
 
     // Without turn costs, this path costs 3x100 + 1x50 = 300.
-    GraphPath path = checkForwardRouteDuration(
-      new RoutingContext(options, graph, topRight, bottomLeft),
-      350
-    );
+    GraphPath path = checkForwardRouteDuration(options, StreetMode.CAR, topRight, bottomLeft, 350);
 
     List<State> states = path.states;
     assertEquals(5, states.size());
@@ -160,16 +157,11 @@ public class TurnCostTest {
 
   @Test
   public void testForwardCarConstTurnCosts() {
-    RoutingRequest options = proto.clone();
-    graph.setIntersectionTraversalCostModel(new ConstantIntersectionTraversalCostModel(10.0));
-    options.setMode(TraverseMode.CAR);
+    calculator = new ConstantIntersectionTraversalCalculator(10.0);
 
     // Without turn costs, this path costs 3x100 + 1x50 = 350.
     // Since there are 3 turns, the total cost should be 380.
-    GraphPath path = checkForwardRouteDuration(
-      new RoutingContext(options, graph, topRight, bottomLeft),
-      380
-    );
+    GraphPath path = checkForwardRouteDuration(proto, StreetMode.CAR, topRight, bottomLeft, 380);
 
     List<State> states = path.states;
     assertEquals(5, states.size());
@@ -187,8 +179,21 @@ public class TurnCostTest {
     assertEquals(380, states.get(4).getElapsedTimeSeconds()); // broad2_3 = 100
   }
 
-  private GraphPath checkForwardRouteDuration(RoutingContext context, int expectedDuration) {
-    ShortestPathTree tree = AStarBuilder.oneToOne().setContext(context).getShortestPathTree();
+  private GraphPath checkForwardRouteDuration(
+    RouteRequest request,
+    StreetMode streetMode,
+    Vertex from,
+    Vertex to,
+    int expectedDuration
+  ) {
+    ShortestPathTree tree = AStarBuilder
+      .oneToOne()
+      .setRequest(request)
+      .setStreetRequest(new StreetRequest(streetMode))
+      .setFrom(from)
+      .setTo(to)
+      .setIntersectionTraversalCalculator(calculator)
+      .getShortestPathTree();
     GraphPath path = tree.getPath(bottomLeft);
     assertNotNull(path);
 

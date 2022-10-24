@@ -1,7 +1,9 @@
 package org.opentripplanner.transit.raptor.speed_test;
 
 import static org.opentripplanner.model.projectinfo.OtpProjectInfo.projectInfo;
+import static org.opentripplanner.standalone.configure.ConstructApplication.creatTransitLayerForRaptor;
 import static org.opentripplanner.transit.raptor.speed_test.model.timer.SpeedTestTimer.nanosToMillisecond;
+import static org.opentripplanner.transit.raptor.speed_test.support.AssertSpeedTestSetup.assertTestDateHasData;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -12,16 +14,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.opentripplanner.OtpModel;
 import org.opentripplanner.datastore.OtpDataStore;
-import org.opentripplanner.routing.algorithm.RoutingWorker;
 import org.opentripplanner.routing.api.response.RoutingResponse;
 import org.opentripplanner.routing.framework.DebugTimingAggregator;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.SerializedGraphObject;
 import org.opentripplanner.standalone.OtpStartupInfo;
+import org.opentripplanner.standalone.api.OtpServerRequestContext;
+import org.opentripplanner.standalone.config.BuildConfig;
 import org.opentripplanner.standalone.config.RouterConfig;
-import org.opentripplanner.standalone.server.Router;
+import org.opentripplanner.standalone.server.DefaultServerRequestContext;
+import org.opentripplanner.transit.raptor.configure.RaptorConfig;
 import org.opentripplanner.transit.raptor.speed_test.model.SpeedTestProfile;
 import org.opentripplanner.transit.raptor.speed_test.model.testcase.CsvFileIO;
 import org.opentripplanner.transit.raptor.speed_test.model.testcase.TestCase;
@@ -29,6 +32,7 @@ import org.opentripplanner.transit.raptor.speed_test.model.testcase.TestCaseInpu
 import org.opentripplanner.transit.raptor.speed_test.model.timer.SpeedTestTimer;
 import org.opentripplanner.transit.raptor.speed_test.options.SpeedTestCmdLineOpts;
 import org.opentripplanner.transit.raptor.speed_test.options.SpeedTestConfig;
+import org.opentripplanner.transit.service.DefaultTransitService;
 import org.opentripplanner.transit.service.TransitModel;
 import org.opentripplanner.util.OtpAppException;
 
@@ -43,12 +47,14 @@ public class SpeedTest {
   private final Graph graph;
   private final TransitModel transitModel;
 
+  private final BuildConfig buildConfig;
+
   private final SpeedTestTimer timer = new SpeedTestTimer();
 
   private final SpeedTestCmdLineOpts opts;
   private final SpeedTestConfig config;
   private final List<TestCaseInput> testCaseInputs;
-  private final Router router;
+  private final OtpServerRequestContext serverContext;
   private final Map<SpeedTestProfile, List<Integer>> workerResults = new HashMap<>();
   private final Map<SpeedTestProfile, List<Integer>> totalResults = new HashMap<>();
   private final CsvFileIO tcIO;
@@ -57,17 +63,29 @@ public class SpeedTest {
   private SpeedTest(SpeedTestCmdLineOpts opts) {
     this.opts = opts;
     this.config = SpeedTestConfig.config(opts.rootDir());
-    OtpModel otpModel = loadGraph(opts.rootDir(), config.graph);
-    this.graph = otpModel.graph;
-    this.transitModel = otpModel.transitModel;
+    var model = loadGraph(opts.rootDir(), config.graph);
+    this.graph = model.graph();
+    this.transitModel = model.transitModel();
+    this.buildConfig = model.buildConfig();
 
-    this.tcIO = new CsvFileIO(opts.rootDir(), TRAVEL_SEARCH_FILENAME);
+    this.tcIO = new CsvFileIO(opts.rootDir(), TRAVEL_SEARCH_FILENAME, config.feedId);
 
     // Read Test-case definitions and expected results from file
     this.testCaseInputs = filterTestCases(opts, tcIO.readTestCasesFromFile());
 
-    this.router = new Router(graph, transitModel, RouterConfig.DEFAULT, timer.getRegistry());
-    this.router.startup();
+    var routerConfig = RouterConfig.DEFAULT;
+    this.serverContext =
+      DefaultServerRequestContext.create(
+        routerConfig,
+        new RaptorConfig<>(routerConfig.raptorTuningParameters()),
+        graph,
+        new DefaultTransitService(transitModel),
+        timer.getRegistry(),
+        null
+      );
+    // Creating transitLayerForRaptor should be integrated into the TransitModel, but for now
+    // we do it manually here
+    creatTransitLayerForRaptor(transitModel, routerConfig);
 
     timer.setUp(opts.groupResultsByCategory());
   }
@@ -93,19 +111,21 @@ public class SpeedTest {
     }
   }
 
-  private static OtpModel loadGraph(File baseDir, URI path) {
+  private static LoadModel loadGraph(File baseDir, URI path) {
     File file = path == null
       ? OtpDataStore.graphFile(baseDir)
       : path.isAbsolute() ? new File(path) : new File(baseDir, path.getPath());
     SerializedGraphObject serializedGraphObject = SerializedGraphObject.load(file);
     Graph graph = serializedGraphObject.graph;
+
     if (graph == null) {
       throw new IllegalStateException();
     }
+
     TransitModel transitModel = serializedGraphObject.transitModel;
     transitModel.index();
-    graph.index();
-    return new OtpModel(graph, transitModel);
+    graph.index(transitModel.getStopModel());
+    return new LoadModel(graph, transitModel, serializedGraphObject.buildConfig);
   }
 
   /**
@@ -134,6 +154,8 @@ public class SpeedTest {
     System.err.println("Run Speed Test");
     final SpeedTestProfile[] speedTestProfiles = opts.profiles();
     final int nSamples = opts.numberOfTestsSamplesToRun();
+
+    assertTestDateHasData(transitModel, config, buildConfig);
 
     initProfileStatistics();
 
@@ -205,9 +227,7 @@ public class SpeedTest {
         getTimeZoneId()
       );
       var routingRequest = speedTestRequest.toRoutingRequest();
-
-      var worker = new RoutingWorker(this.router, routingRequest, getTimeZoneId());
-      RoutingResponse routingResponse = worker.route();
+      RoutingResponse routingResponse = serverContext.routingService().route(routingRequest);
 
       var times = routingResponse.getDebugTimingAggregator().finishedRendering();
 
@@ -260,4 +280,6 @@ public class SpeedTest {
   private static boolean includeCategory(Collection<String> includeCategories, TestCaseInput c) {
     return includeCategories.contains(c.definition().category());
   }
+
+  record LoadModel(Graph graph, TransitModel transitModel, BuildConfig buildConfig) {}
 }

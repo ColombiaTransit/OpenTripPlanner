@@ -4,8 +4,8 @@ import java.util.Iterator;
 import org.opentripplanner.transit.raptor.api.request.RaptorTuningParameters;
 import org.opentripplanner.transit.raptor.api.request.SearchParams;
 import org.opentripplanner.transit.raptor.api.transit.IntIterator;
+import org.opentripplanner.transit.raptor.api.transit.RaptorAccessEgress;
 import org.opentripplanner.transit.raptor.api.transit.RaptorConstrainedTripScheduleBoardingSearch;
-import org.opentripplanner.transit.raptor.api.transit.RaptorRoute;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTimeTable;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
 import org.opentripplanner.transit.raptor.api.transit.RaptorTransitDataProvider;
@@ -75,8 +75,8 @@ public final class ReverseTransitCalculator<T extends RaptorTripSchedule>
   }
 
   @Override
-  public int departureTime(RaptorTransfer transfer, int departureTime) {
-    return transfer.latestArrivalTime(departureTime);
+  public int departureTime(RaptorAccessEgress accessEgress, int departureTime) {
+    return accessEgress.latestArrivalTime(departureTime);
   }
 
   @Override
@@ -102,9 +102,10 @@ public final class ReverseTransitCalculator<T extends RaptorTripSchedule>
 
   @Override
   public RaptorConstrainedTripScheduleBoardingSearch<T> transferConstraintsSearch(
-    RaptorRoute<T> route
+    RaptorTransitDataProvider<T> transitData,
+    int routeIndex
   ) {
-    return route.transferConstraintsReverseSearch();
+    return transitData.transferConstraintsReverseSearch(routeIndex);
   }
 
   @Override

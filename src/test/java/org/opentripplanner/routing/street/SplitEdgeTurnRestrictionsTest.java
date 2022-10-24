@@ -1,28 +1,25 @@
 package org.opentripplanner.routing.street;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.opentripplanner.test.support.PolylineAssert.assertThatPolylinesAreEqual;
 
-import io.micrometer.core.instrument.Metrics;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Geometry;
-import org.mockito.Mockito;
 import org.opentripplanner.ConstantsForTests;
-import org.opentripplanner.OtpModel;
+import org.opentripplanner.TestOtpModel;
 import org.opentripplanner.model.GenericLocation;
+import org.opentripplanner.model.plan.StreetLeg;
 import org.opentripplanner.routing.algorithm.mapping.GraphPathToItineraryMapper;
-import org.opentripplanner.routing.api.request.RoutingRequest;
-import org.opentripplanner.routing.core.RoutingContext;
+import org.opentripplanner.routing.api.request.RouteRequest;
+import org.opentripplanner.routing.api.request.StreetMode;
 import org.opentripplanner.routing.core.TemporaryVerticesContainer;
 import org.opentripplanner.routing.core.TraverseMode;
-import org.opentripplanner.routing.core.TraverseModeSet;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.impl.GraphPathFinder;
-import org.opentripplanner.standalone.config.RouterConfig;
-import org.opentripplanner.standalone.server.Router;
-import org.opentripplanner.transit.service.TransitModel;
 import org.opentripplanner.util.PolylineEncoder;
 import org.opentripplanner.util.TestUtils;
 
@@ -49,11 +46,11 @@ public class SplitEdgeTurnRestrictionsTest {
 
   @Test
   void shouldTakeDeufringenTurnRestrictionsIntoAccount() {
-    OtpModel otpModel = ConstantsForTests.buildOsmAndGtfsGraph(
+    TestOtpModel model = ConstantsForTests.buildOsmAndGtfsGraph(
       ConstantsForTests.DEUFRINGEN_OSM,
       ConstantsForTests.VVS_BUS_764_ONLY
     );
-    Graph graph = otpModel.graph;
+    Graph graph = model.graph();
     // https://www.openstreetmap.org/relation/10264251 has a turn restriction so when leaving Hardtheimer Weg
     // you must either turn right and take the long way to Steinhaldenweg or go past the intersection with the
     // turn restriction and turn around.
@@ -89,11 +86,11 @@ public class SplitEdgeTurnRestrictionsTest {
   void shouldTakeBoeblingenTurnRestrictionsIntoAccount() {
     // this tests that the following turn restriction is transferred correctly to the split edges
     // https://www.openstreetmap.org/relation/299171
-    OtpModel otpModel = ConstantsForTests.buildOsmAndGtfsGraph(
+    TestOtpModel model = ConstantsForTests.buildOsmAndGtfsGraph(
       ConstantsForTests.BOEBLINGEN_OSM,
       ConstantsForTests.VVS_BUS_751_ONLY
     );
-    var graph = otpModel.graph;
+    var graph = model.graph();
 
     // turning left from the main road onto a residential one
     var turnLeft = computeCarPolyline(graph, parkStrasse, paulGerhardtWegEast);
@@ -145,25 +142,20 @@ public class SplitEdgeTurnRestrictionsTest {
   }
 
   private static String computeCarPolyline(Graph graph, GenericLocation from, GenericLocation to) {
-    RoutingRequest request = new RoutingRequest();
+    RouteRequest request = new RouteRequest();
     request.setDateTime(dateTime);
-    request.from = from;
-    request.to = to;
+    request.setFrom(from);
+    request.setTo(to);
 
-    request.streetSubRequestModes = new TraverseModeSet(TraverseMode.CAR);
-
-    var temporaryVertices = new TemporaryVerticesContainer(graph, request);
-    RoutingContext routingContext = new RoutingContext(request, graph, temporaryVertices);
-
-    var gpf = new GraphPathFinder(
-      new Router(
-        graph,
-        Mockito.mock(TransitModel.class),
-        RouterConfig.DEFAULT,
-        Metrics.globalRegistry
-      )
+    request.journey().direct().setMode(StreetMode.CAR);
+    var temporaryVertices = new TemporaryVerticesContainer(
+      graph,
+      request,
+      StreetMode.CAR,
+      StreetMode.CAR
     );
-    var paths = gpf.graphPathFinderEntryPoint(routingContext);
+    var gpf = new GraphPathFinder(null, Duration.ofSeconds(5));
+    var paths = gpf.graphPathFinderEntryPoint(request, temporaryVertices);
 
     GraphPathToItineraryMapper graphPathToItineraryMapper = new GraphPathToItineraryMapper(
       ZoneId.of("Europe/Berlin"),
@@ -176,7 +168,15 @@ public class SplitEdgeTurnRestrictionsTest {
 
     // make sure that we only get CAR legs
     itineraries.forEach(i ->
-      i.getLegs().forEach(l -> Assertions.assertEquals(l.getMode(), TraverseMode.CAR))
+      i
+        .getLegs()
+        .forEach(l -> {
+          if (l instanceof StreetLeg stLeg) {
+            assertEquals(TraverseMode.CAR, stLeg.getMode());
+          } else {
+            fail("Expected StreetLeg (CAR): " + l);
+          }
+        })
     );
     Geometry geometry = itineraries.get(0).getLegs().get(0).getLegGeometry();
     return PolylineEncoder.encodeGeometry(geometry).points();

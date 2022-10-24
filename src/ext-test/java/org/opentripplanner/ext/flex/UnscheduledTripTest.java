@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.opentripplanner.OtpModel;
+import org.opentripplanner.TestOtpModel;
 import org.opentripplanner.ext.flex.trip.FlexTrip;
 import org.opentripplanner.ext.flex.trip.UnscheduledTrip;
 import org.opentripplanner.routing.graphfinder.NearbyStop;
@@ -28,7 +28,7 @@ public class UnscheduledTripTest extends FlexTest {
   static TransitModel transitModel;
 
   @Test
-  public void parseAspenTaxiAsUnscheduledTrip() {
+  void parseAspenTaxiAsUnscheduledTrip() {
     var flexTrips = transitModel.getAllFlexTrips();
     assertFalse(flexTrips.isEmpty());
     assertEquals(
@@ -43,13 +43,11 @@ public class UnscheduledTripTest extends FlexTest {
   }
 
   @Test
-  public void calculateAccessTemplate() {
+  void calculateAccessTemplate() {
     var trip = getFlexTrip();
     var nearbyStop = getNearbyStop(trip);
 
-    var accesses = trip
-      .getFlexAccessTemplates(nearbyStop, flexDate, calculator, params)
-      .collect(Collectors.toList());
+    var accesses = trip.getFlexAccessTemplates(nearbyStop, flexDate, calculator, params).toList();
 
     assertEquals(1, accesses.size());
 
@@ -59,12 +57,10 @@ public class UnscheduledTripTest extends FlexTest {
   }
 
   @Test
-  public void calculateEgressTemplate() {
+  void calculateEgressTemplate() {
     var trip = getFlexTrip();
     var nearbyStop = getNearbyStop(trip);
-    var egresses = trip
-      .getFlexEgressTemplates(nearbyStop, flexDate, calculator, params)
-      .collect(Collectors.toList());
+    var egresses = trip.getFlexEgressTemplates(nearbyStop, flexDate, calculator, params).toList();
 
     assertEquals(1, egresses.size());
 
@@ -73,19 +69,24 @@ public class UnscheduledTripTest extends FlexTest {
     assertEquals(0, egress.toStopIndex);
   }
 
+  @Test
+  void shouldGeneratePatternForFlexTripWithSingleStop() {
+    assertFalse(transitModel.getAllTripPatterns().isEmpty());
+  }
+
   @BeforeAll
   static void setup() {
-    OtpModel otpModel = FlexTest.buildFlexGraph(ASPEN_GTFS);
-    transitModel = otpModel.transitModel;
+    TestOtpModel model = FlexTest.buildFlexGraph(ASPEN_GTFS);
+    transitModel = model.transitModel();
   }
 
-  private static NearbyStop getNearbyStop(FlexTrip trip) {
+  private static NearbyStop getNearbyStop(FlexTrip<?, ?> trip) {
     assertEquals(1, trip.getStops().size());
     var stopLocation = trip.getStops().iterator().next();
-    return new NearbyStop(stopLocation, 0, List.of(), null, null);
+    return new NearbyStop(stopLocation, 0, List.of(), null);
   }
 
-  private static FlexTrip getFlexTrip() {
+  private static FlexTrip<?, ?> getFlexTrip() {
     var flexTrips = transitModel.getAllFlexTrips();
     return flexTrips.iterator().next();
   }

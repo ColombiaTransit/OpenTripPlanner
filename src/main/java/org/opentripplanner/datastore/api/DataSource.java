@@ -3,6 +3,7 @@ package org.opentripplanner.datastore.api;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.text.SimpleDateFormat;
 import org.apache.commons.io.IOUtils;
 import org.opentripplanner.common.LoggingUtil;
@@ -29,6 +30,9 @@ import org.opentripplanner.datastore.OtpDataStore;
  * these files.
  */
 public interface DataSource {
+  /** Used for returning unknown file size and unknown last modified time */
+  long UNKNOWN = -1;
+
   /**
    * @return the short name identifying the source within its scope (withing a {@link OtpDataStore}
    * or {@link CompositeDataSource}) Including the file extension.
@@ -46,6 +50,11 @@ public interface DataSource {
   String path();
 
   /**
+   * @return the URI of the datasource. The URI can be used to identify uniquely the data source.
+   */
+  URI uri();
+
+  /**
    * The file type this data source is identified as.
    */
   FileType type();
@@ -54,14 +63,14 @@ public interface DataSource {
    * @return size in bytes, if unknown returns {@code -1}
    */
   default long size() {
-    return -1;
+    return UNKNOWN;
   }
 
   /**
    * @return last modified timestamp in ms, if unknown returns {@code -1}
    */
   default long lastModified() {
-    return -1;
+    return UNKNOWN;
   }
 
   /**
@@ -137,7 +146,10 @@ public interface DataSource {
     return info;
   }
 
-  private String directory() {
+  /**
+   * Return the directory that contains the file.
+   */
+  default String directory() {
     int endIndex = path().length() - (name().length() + 1);
     return endIndex <= 0 ? "" : path().substring(0, endIndex);
   }

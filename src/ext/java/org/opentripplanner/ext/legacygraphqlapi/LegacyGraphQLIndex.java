@@ -1,6 +1,5 @@
 package org.opentripplanner.ext.legacygraphqlapi;
 
-import com.google.api.client.util.Charsets;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import graphql.ExecutionInput;
@@ -18,6 +17,7 @@ import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import io.micrometer.core.instrument.Metrics;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -64,6 +64,7 @@ import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLStopRe
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLStoptimeImpl;
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLStoptimesInPatternImpl;
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLSystemNoticeImpl;
+import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLTicketTypeImpl;
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLTranslatedStringImpl;
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLTripImpl;
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLUnknownImpl;
@@ -78,9 +79,7 @@ import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLplaceA
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLserviceTimeRangeImpl;
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLstepImpl;
 import org.opentripplanner.ext.legacygraphqlapi.datafetchers.LegacyGraphQLstopAtDistanceImpl;
-import org.opentripplanner.routing.RoutingService;
-import org.opentripplanner.standalone.server.Router;
-import org.opentripplanner.transit.service.DefaultTransitService;
+import org.opentripplanner.standalone.api.OtpServerRequestContext;
 import org.opentripplanner.util.OTPFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +97,7 @@ class LegacyGraphQLIndex {
   protected static GraphQLSchema buildSchema() {
     try {
       URL url = Resources.getResource("legacygraphqlapi/schema.graphqls");
-      String sdl = Resources.toString(url, Charsets.UTF_8);
+      String sdl = Resources.toString(url, StandardCharsets.UTF_8);
       TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(sdl);
       RuntimeWiring runtimeWiring = RuntimeWiring
         .newRuntimeWiring()
@@ -140,6 +139,7 @@ class LegacyGraphQLIndex {
         .type(IntrospectionTypeWiring.build(LegacyGraphQLstopAtDistanceImpl.class))
         .type(IntrospectionTypeWiring.build(LegacyGraphQLStoptimeImpl.class))
         .type(IntrospectionTypeWiring.build(LegacyGraphQLStoptimesInPatternImpl.class))
+        .type(IntrospectionTypeWiring.build(LegacyGraphQLTicketTypeImpl.class))
         .type(IntrospectionTypeWiring.build(LegacyGraphQLTranslatedStringImpl.class))
         .type(IntrospectionTypeWiring.build(LegacyGraphQLTripImpl.class))
         .type(IntrospectionTypeWiring.build(LegacyGraphQLSystemNoticeImpl.class))
@@ -169,7 +169,7 @@ class LegacyGraphQLIndex {
 
   static ExecutionResult getGraphQLExecutionResult(
     String query,
-    Router router,
+    OtpServerRequestContext serverContext,
     Map<String, Object> variables,
     String operationName,
     int maxResolves,
@@ -193,9 +193,10 @@ class LegacyGraphQLIndex {
     }
 
     LegacyGraphQLRequestContext requestContext = new LegacyGraphQLRequestContext(
-      router,
-      new RoutingService(router.graph, router.transitModel),
-      new DefaultTransitService(router.transitModel)
+      serverContext,
+      serverContext.routingService(),
+      serverContext.transitService(),
+      serverContext.graph().getFareService()
     );
 
     ExecutionInput executionInput = ExecutionInput
@@ -203,7 +204,7 @@ class LegacyGraphQLIndex {
       .query(query)
       .operationName(operationName)
       .context(requestContext)
-      .root(router)
+      .root(serverContext)
       .variables(variables)
       .locale(locale)
       .build();
@@ -216,7 +217,7 @@ class LegacyGraphQLIndex {
 
   static Response getGraphQLResponse(
     String query,
-    Router router,
+    OtpServerRequestContext serverContext,
     Map<String, Object> variables,
     String operationName,
     int maxResolves,
@@ -225,7 +226,7 @@ class LegacyGraphQLIndex {
   ) {
     ExecutionResult executionResult = getGraphQLExecutionResult(
       query,
-      router,
+      serverContext,
       variables,
       operationName,
       maxResolves,

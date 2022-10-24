@@ -1,8 +1,10 @@
 package org.opentripplanner.routing.algorithm.astar.strategies;
 
-import com.google.common.collect.Iterables;
+import java.util.Set;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
-import org.opentripplanner.routing.core.RoutingContext;
+import org.opentripplanner.routing.api.request.RouteRequest;
+import org.opentripplanner.routing.api.request.StreetMode;
+import org.opentripplanner.routing.api.request.preference.RoutingPreferences;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.core.VehicleRentalState;
 import org.opentripplanner.routing.edgetype.FreeEdge;
@@ -14,8 +16,6 @@ import org.opentripplanner.routing.graph.Vertex;
  */
 public class EuclideanRemainingWeightHeuristic implements RemainingWeightHeuristic {
 
-  private static final long serialVersionUID = -5172878150967231550L;
-
   private double lat;
   private double lon;
   private double maxStreetSpeed;
@@ -25,14 +25,19 @@ public class EuclideanRemainingWeightHeuristic implements RemainingWeightHeurist
   // TODO This currently only uses the first toVertex. If there are multiple toVertices, it will
   //      not work correctly.
   @Override
-  public void initialize(RoutingContext rctx) {
-    Vertex target = rctx.toVertices.iterator().next();
-    maxStreetSpeed = rctx.opt.getStreetSpeedUpperBound();
-    walkingSpeed = rctx.opt.walkSpeed;
-    arriveBy = rctx.opt.arriveBy;
+  public void initialize(
+    RouteRequest request,
+    StreetMode streetMode,
+    Set<Vertex> fromVertices,
+    Set<Vertex> toVertices
+  ) {
+    Vertex target = toVertices.iterator().next();
+    maxStreetSpeed = getStreetSpeedUpperBound(request.preferences(), streetMode);
+    walkingSpeed = request.preferences().walk().speed();
+    arriveBy = request.arriveBy();
 
     if (target.getDegreeIn() == 1) {
-      Edge edge = Iterables.getOnlyElement(target.getIncoming());
+      Edge edge = target.getIncoming().iterator().next();
       if (edge instanceof FreeEdge) {
         target = edge.getFromVertex();
       }
@@ -40,6 +45,18 @@ public class EuclideanRemainingWeightHeuristic implements RemainingWeightHeurist
 
     lat = target.getLat();
     lon = target.getLon();
+  }
+
+  /** @return The highest speed for all possible road-modes. */
+  private double getStreetSpeedUpperBound(RoutingPreferences preferences, StreetMode streetMode) {
+    // Assume carSpeed > bikeSpeed > walkSpeed
+    if (streetMode.includesDriving()) {
+      return preferences.car().speed();
+    }
+    if (streetMode.includesBiking()) {
+      return preferences.bike().speed();
+    }
+    return preferences.walk().speed();
   }
 
   /**

@@ -9,6 +9,11 @@ import java.util.Locale;
  * @author mabu
  */
 public interface I18NString {
+  /** true if the given value is not {@code null} or has at least one none white-space character. */
+  public static boolean hasValue(I18NString value) {
+    return value != null && !value.toString().isBlank();
+  }
+
   /**
    * Returns default translation (english)
    */
@@ -20,4 +25,14 @@ public interface I18NString {
    * @param locale Wanted locale
    */
   String toString(Locale locale);
+
+  public static I18NString assertHasValue(I18NString value) {
+    if (value == null || value.toString().isBlank()) {
+      throw new IllegalArgumentException(
+        "Value can not be null, empty or just whitespace: " +
+        (value == null ? "null" : "'" + value + "'")
+      );
+    }
+    return value;
+  }
 }

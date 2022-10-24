@@ -4,12 +4,15 @@ import graphql.Scalars;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
+import graphql.schema.GraphQLNonNull;
+import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.DoubleFunction;
 import org.opentripplanner.ext.transmodelapi.support.DataFetcherDecorator;
 import org.opentripplanner.ext.transmodelapi.support.GqlUtil;
-import org.opentripplanner.routing.api.request.ItineraryFilterParameters;
-import org.opentripplanner.routing.api.request.RequestFunctions;
+import org.opentripplanner.routing.algorithm.filterchain.api.TransitGeneralizedCostFilterParams;
+import org.opentripplanner.routing.api.request.framework.DoubleAlgorithmFunction;
+import org.opentripplanner.routing.api.request.framework.RequestFunctions;
+import org.opentripplanner.routing.api.request.preference.ItineraryFilterPreferences;
 
 public class ItineraryFiltersInputType {
 
@@ -22,7 +25,7 @@ public class ItineraryFiltersInputType {
   private static final String GROUP_SIMILARITY_KEEP_N_ITINERARIES =
     "groupSimilarityKeepNumOfItineraries";
 
-  public static GraphQLInputObjectType create(GqlUtil gqlUtil, ItineraryFilterParameters dft) {
+  public static GraphQLInputObjectType create(GqlUtil gqlUtil, ItineraryFilterPreferences dft) {
     return GraphQLInputObjectType
       .newInputObject()
       .name("ItineraryFilters")
@@ -47,19 +50,42 @@ public class ItineraryFiltersInputType {
         GraphQLInputObjectField
           .newInputObjectField()
           .name(TRANSIT_GENERALIZED_COST_LIMIT)
-          .type(gqlUtil.doubleFunctionScalar)
+          .type(
+            GraphQLInputObjectType
+              .newInputObject()
+              .name("TransitGeneralizedCostFilterParams")
+              .field(
+                GraphQLInputObjectField
+                  .newInputObjectField()
+                  .name("costLimitFunction")
+                  .type(new GraphQLNonNull(gqlUtil.doubleFunctionScalar))
+                  .build()
+              )
+              .field(
+                GraphQLInputObjectField
+                  .newInputObjectField()
+                  .name("intervalRelaxFactor")
+                  .type(new GraphQLNonNull(Scalars.GraphQLFloat))
+                  .build()
+              )
+              .build()
+          )
           // There is a bug in the GraphQL lib. The default value is shown as a `boolean`
           // with value `false`, not the actual value. Hence; The default is added to the
           // description instead.
           .description(
-            "Set a relative limit for all transit itineraries. The limit is " +
-            "calculated based on the best transit itinerary generalized-cost. " +
+            "Set a relative limit for all transit itineraries. The limit is calculated based on " +
+            "the transit itinerary generalized-cost and the time between itineraries " +
             "Itineraries without transit legs are excluded from this filter. Example: " +
-            "f(x) = 3600 + 2.0 x. If the lowest cost returned is 10 000, then the limit " +
-            "is set to: 3 600 + 2 * 10 000 = 26 600. Then all itineraries with at least " +
-            "one transit leg and a cost above 26 600 is removed from the result. " +
-            "Default: " +
-            RequestFunctions.serialize(dft.transitGeneralizedCostLimit)
+            "costLimitFunction(x) = 3600 + 2.0 x and intervalRelaxFactor = 0.5. " +
+            "If the lowest cost returned is 10 000, then the limit " +
+            "is set to: 3 600 + 2 * 10 000 = 26 600 plus half of the time between either departure" +
+            " or arrival times of the itinerary. " +
+            "Default: {\"costLimitFunction\": " +
+            RequestFunctions.serialize(dft.transitGeneralizedCostLimit().costLimitFunction()) +
+            ", \"intervalRelaxFactor\": " +
+            dft.transitGeneralizedCostLimit().intervalRelaxFactor() +
+            "}"
           )
           .build()
       )
@@ -72,7 +98,7 @@ public class ItineraryFiltersInputType {
             "Pick ONE itinerary from each group after putting itineraries that is 85% " +
             "similar together."
           )
-          .defaultValue(dft.groupSimilarityKeepOne)
+          .defaultValue(dft.groupSimilarityKeepOne())
           .build()
       )
       .field(
@@ -86,7 +112,7 @@ public class ItineraryFiltersInputType {
             " 68% of the distance is traveled by similar legs, then two itineraries are " +
             "in the same group. Default value is 68%, must be at least 50%."
           )
-          .defaultValue(dft.groupSimilarityKeepThree)
+          .defaultValue(dft.groupSimilarityKeepThree())
           .build()
       )
       .field(
@@ -95,7 +121,7 @@ public class ItineraryFiltersInputType {
           .type(Scalars.GraphQLFloat)
           .name(GROUP_SIMILARITY_KEEP_N_ITINERARIES)
           .deprecate("Use " + GROUP_SIMILARITY_KEEP_THREE + " instead.")
-          .defaultValue(dft.groupSimilarityKeepThree)
+          .defaultValue(dft.groupSimilarityKeepThree())
           .build()
       )
       .field(
@@ -109,7 +135,7 @@ public class ItineraryFiltersInputType {
             "double the cost, and any itineraries having a higher cost will be filtered. " +
             "Default value is 2.0, use a value lower than 1.0 to turn off"
           )
-          .defaultValue(dft.groupedOtherThanSameLegsMaxCostMultiplier)
+          .defaultValue(dft.groupedOtherThanSameLegsMaxCostMultiplier())
           .build()
       )
       .build();
@@ -118,34 +144,32 @@ public class ItineraryFiltersInputType {
   public static void mapToRequest(
     DataFetchingEnvironment environment,
     DataFetcherDecorator callWith,
-    ItineraryFilterParameters target
+    ItineraryFilterPreferences.Builder builder
   ) {
     if (!GqlUtil.hasArgument(environment, "itineraryFilters")) {
       return;
     }
-    setField(callWith, GROUP_SIMILARITY_KEEP_ONE, (Double v) -> target.groupSimilarityKeepOne = v);
+    setField(callWith, GROUP_SIMILARITY_KEEP_ONE, builder::withGroupSimilarityKeepOne);
 
     // This is deprecated, sets same value as GROUP_SIMILARITY_KEEP_THREE
-    setField(
-      callWith,
-      GROUP_SIMILARITY_KEEP_N_ITINERARIES,
-      (Double v) -> target.groupSimilarityKeepThree = v
-    );
+    setField(callWith, GROUP_SIMILARITY_KEEP_N_ITINERARIES, builder::withGroupSimilarityKeepThree);
 
-    setField(
-      callWith,
-      GROUP_SIMILARITY_KEEP_THREE,
-      (Double v) -> target.groupSimilarityKeepThree = v
-    );
+    setField(callWith, GROUP_SIMILARITY_KEEP_THREE, builder::withGroupSimilarityKeepThree);
     setField(
       callWith,
       GROUPED_OTHER_THAN_SAME_LEGS_MAX_COST_MULTIPLIER,
-      (Double v) -> target.groupedOtherThanSameLegsMaxCostMultiplier = v
+      builder::withGroupedOtherThanSameLegsMaxCostMultiplier
     );
     setField(
       callWith,
       TRANSIT_GENERALIZED_COST_LIMIT,
-      (DoubleFunction<Double> v) -> target.transitGeneralizedCostLimit = v
+      (Map<String, ?> v) ->
+        builder.withTransitGeneralizedCostLimit(
+          new TransitGeneralizedCostFilterParams(
+            (DoubleAlgorithmFunction) v.get("costLimitFunction"),
+            (double) v.get("intervalRelaxFactor")
+          )
+        )
     );
   }
 

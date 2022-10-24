@@ -3,22 +3,22 @@ package org.opentripplanner.routing.edgetype;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.opentripplanner.routing.api.request.WheelchairAccessibilityFeature.ofOnlyAccessible;
+import static org.opentripplanner.routing.api.request.preference.AccessibilityPreferences.ofOnlyAccessible;
 
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.opentripplanner.model.PathwayMode;
-import org.opentripplanner.routing.api.request.RoutingRequest;
-import org.opentripplanner.routing.api.request.WheelchairAccessibilityRequest;
-import org.opentripplanner.routing.core.RoutingContext;
+import org.opentripplanner.routing.api.request.StreetMode;
+import org.opentripplanner.routing.api.request.preference.WheelchairPreferences;
+import org.opentripplanner.routing.core.AStarRequest;
 import org.opentripplanner.routing.core.State;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.graph.Vertex;
 import org.opentripplanner.routing.vertextype.SimpleVertex;
 import org.opentripplanner.test.support.VariableSource;
 import org.opentripplanner.transit.model.basic.NonLocalizedString;
+import org.opentripplanner.transit.model.site.PathwayMode;
 
 class PathwayEdgeTest {
 
@@ -194,21 +194,23 @@ class PathwayEdgeTest {
   }
 
   private State assertThatEdgeIsTraversable(PathwayEdge edge, boolean wheelchair) {
-    var req = new RoutingRequest();
-    req.wheelchairAccessibility =
-      new WheelchairAccessibilityRequest(
-        wheelchair,
-        ofOnlyAccessible(),
-        ofOnlyAccessible(),
-        ofOnlyAccessible(),
-        25,
-        0.08,
-        1,
-        25
-      );
-    var state = new State(new RoutingContext(req, graph, from, to));
+    var req = AStarRequest.of().withWheelchair(wheelchair).withMode(StreetMode.WALK);
 
-    var afterTraversal = edge.traverse(state);
+    req.withPreferences(preferences ->
+      preferences.withWheelchair(
+        new WheelchairPreferences(
+          ofOnlyAccessible(),
+          ofOnlyAccessible(),
+          ofOnlyAccessible(),
+          25,
+          0.08,
+          1,
+          25
+        )
+      )
+    );
+
+    var afterTraversal = edge.traverse(new State(from, req.build()));
     assertNotNull(afterTraversal);
 
     assertTrue(afterTraversal.getWeight() > 0);

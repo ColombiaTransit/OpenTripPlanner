@@ -37,12 +37,12 @@ import org.apache.lucene.search.suggest.document.SuggestIndexSearcher;
 import org.apache.lucene.store.ByteBuffersDirectory;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.routing.vertextype.StreetVertex;
-import org.opentripplanner.standalone.server.Router;
+import org.opentripplanner.standalone.api.OtpServerRequestContext;
 import org.opentripplanner.transit.model.basic.I18NString;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
-import org.opentripplanner.transit.model.site.StopCollection;
 import org.opentripplanner.transit.model.site.StopLocation;
-import org.opentripplanner.transit.service.TransitModel;
+import org.opentripplanner.transit.model.site.StopLocationsGroup;
+import org.opentripplanner.transit.service.TransitService;
 
 public class LuceneIndex implements Serializable {
 
@@ -55,13 +55,13 @@ public class LuceneIndex implements Serializable {
 
   private final Graph graph;
 
-  private final TransitModel transitModel;
+  private final TransitService transitService;
   private final Analyzer analyzer;
   private final SuggestIndexSearcher searcher;
 
-  public LuceneIndex(Graph graph, TransitModel transitModel) {
+  public LuceneIndex(Graph graph, TransitService transitService) {
     this.graph = graph;
-    this.transitModel = transitModel;
+    this.transitService = transitService;
     this.analyzer =
       new PerFieldAnalyzerWrapper(
         new StandardAnalyzer(),
@@ -77,8 +77,8 @@ public class LuceneIndex implements Serializable {
           iwcWithSuggestField(analyzer, Set.of(SUGGEST))
         )
       ) {
-        transitModel
-          .getAllStopLocations()
+        transitService
+          .listStopLocations()
           .forEach(stopLocation ->
             addToIndex(
               directoryWriter,
@@ -91,18 +91,17 @@ public class LuceneIndex implements Serializable {
             )
           );
 
-        transitModel
-          .getStopModel()
-          .getAllStopCollections()
-          .forEach(stopCollection ->
+        transitService
+          .listStopLocationGroups()
+          .forEach(stopLocationsGroup ->
             addToIndex(
               directoryWriter,
-              StopCollection.class,
-              stopCollection.getId().toString(),
-              stopCollection.getName(),
+              StopLocationsGroup.class,
+              stopLocationsGroup.getId().toString(),
+              stopLocationsGroup.getName(),
               null,
-              stopCollection.getCoordinate().latitude(),
-              stopCollection.getCoordinate().longitude()
+              stopLocationsGroup.getCoordinate().latitude(),
+              stopLocationsGroup.getCoordinate().longitude()
             )
           );
 
@@ -131,28 +130,26 @@ public class LuceneIndex implements Serializable {
     }
   }
 
-  public static synchronized LuceneIndex forServer(Router router) {
-    var graph = router.graph;
-    var transitModel = router.transitModel;
-    var existingIndex = graph.getService(LuceneIndex.class);
+  public static synchronized LuceneIndex forServer(OtpServerRequestContext serverContext) {
+    var graph = serverContext.graph();
+    var existingIndex = graph.getLuceneIndex();
     if (existingIndex != null) {
       return existingIndex;
     }
 
-    var newIndex = new LuceneIndex(graph, transitModel);
-    graph.putService(LuceneIndex.class, newIndex);
+    var newIndex = new LuceneIndex(graph, serverContext.transitService());
+    graph.setLuceneIndex(newIndex);
     return newIndex;
   }
 
   public Stream<StopLocation> queryStopLocations(String query, boolean autocomplete) {
     return matchingDocuments(StopLocation.class, query, autocomplete)
-      .map(document -> transitModel.getStopLocationById(FeedScopedId.parseId(document.get(ID))));
+      .map(document -> transitService.getStopLocation(FeedScopedId.parseId(document.get(ID))));
   }
 
-  public Stream<StopCollection> queryStopCollections(String query, boolean autocomplete) {
-    return matchingDocuments(StopCollection.class, query, autocomplete)
-      .map(document ->
-        transitModel.getStopModel().getStopCollectionById(FeedScopedId.parseId(document.get(ID)))
+  public Stream<StopLocationsGroup> findStopLocationGroups(String query, boolean autocomplete) {
+    return matchingDocuments(StopLocationsGroup.class, query, autocomplete)
+      .map(document -> transitService.getStopLocationsGroup(FeedScopedId.parseId(document.get(ID)))
       );
   }
 

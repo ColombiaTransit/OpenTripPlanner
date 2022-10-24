@@ -11,21 +11,22 @@ import java.util.Optional;
 import java.util.Set;
 import javax.xml.bind.JAXBElement;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
-import org.opentripplanner.model.FlexLocationGroup;
-import org.opentripplanner.model.FlexStopLocation;
-import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.StopTime;
+import org.opentripplanner.model.calendar.ServiceCalendar;
 import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
 import org.opentripplanner.netex.index.api.NetexEntityIndexReadOnlyView;
 import org.opentripplanner.netex.mapping.calendar.CalendarServiceBuilder;
 import org.opentripplanner.netex.mapping.support.FeedScopedIdFactory;
 import org.opentripplanner.netex.mapping.support.NetexMapperIndexes;
-import org.opentripplanner.routing.trippattern.Deduplicator;
+import org.opentripplanner.transit.model.basic.Notice;
+import org.opentripplanner.transit.model.framework.AbstractTransitEntity;
+import org.opentripplanner.transit.model.framework.Deduplicator;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
-import org.opentripplanner.transit.model.framework.TransitEntity;
 import org.opentripplanner.transit.model.network.GroupOfRoutes;
 import org.opentripplanner.transit.model.network.Route;
 import org.opentripplanner.transit.model.organization.Agency;
+import org.opentripplanner.transit.model.site.AreaStop;
+import org.opentripplanner.transit.model.site.GroupStop;
 import org.opentripplanner.transit.model.site.StopLocation;
 import org.opentripplanner.transit.model.timetable.Trip;
 import org.rutebanken.netex.model.Authority;
@@ -129,13 +130,26 @@ public class NetexMapper {
   }
 
   /**
-   * Any post processing step in the mapping is done in this method. The method is called ONCE after
-   * all other mapping is complete. Note! Hierarchical data structures are not accessible any more.
+   * Any post-processing step in the mapping is done in this method. The method is called ONCE after
+   * all other mapping is complete. Note! Hierarchical data structures are not accessible anymore.
    */
-  public void finnishUp() {
+  public void finishUp() {
     // Add Calendar data created during the mapping of dayTypes, dayTypeAssignments,
     // datedServiceJourney and ServiceJourneys
     transitBuilder.getCalendarDates().addAll(calendarServiceBuilder.createServiceCalendar());
+
+    // Add the empty service id, as it can be used for routes expected to be added from realtime
+    // updates or DSJs which are replaced, and where we want to keep the original DSJ
+    ServiceCalendar emptyCalendar = calendarServiceBuilder.createEmptyCalendar();
+    if (
+      transitBuilder
+        .getTripsById()
+        .values()
+        .stream()
+        .anyMatch(trip -> emptyCalendar.getServiceId().equals(trip.getServiceId()))
+    ) {
+      transitBuilder.getCalendars().add(emptyCalendar);
+    }
   }
 
   /**
@@ -283,6 +297,7 @@ public class NetexMapper {
       idFactory,
       currentNetexIndex.getQuayById(),
       tariffZoneMapper,
+      ZoneId.of(currentNetexIndex.getTimeZone()),
       issueStore
     );
     for (String stopPlaceId : currentNetexIndex.getStopPlaceById().localKeys()) {
@@ -337,17 +352,17 @@ public class NetexMapper {
       return;
     }
 
-    FlexStopLocationMapper flexStopLocationMapper = new FlexStopLocationMapper(
+    FlexStopsMapper flexStopsMapper = new FlexStopsMapper(
       idFactory,
       transitBuilder.getStops().values()
     );
 
     for (FlexibleStopPlace flexibleStopPlace : flexibleStopPlaces) {
-      StopLocation stopLocation = flexStopLocationMapper.map(flexibleStopPlace);
-      if (stopLocation instanceof FlexStopLocation) {
-        transitBuilder.getLocations().add((FlexStopLocation) stopLocation);
-      } else if (stopLocation instanceof FlexLocationGroup) {
-        transitBuilder.getLocationGroups().add((FlexLocationGroup) stopLocation);
+      StopLocation stopLocation = flexStopsMapper.map(flexibleStopPlace);
+      if (stopLocation instanceof AreaStop) {
+        transitBuilder.getAreaStops().add((AreaStop) stopLocation);
+      } else if (stopLocation instanceof GroupStop groupStop) {
+        transitBuilder.getGroupStops().add(groupStop);
       }
     }
   }
@@ -407,8 +422,8 @@ public class NetexMapper {
       idFactory,
       transitBuilder.getOperatorsById(),
       transitBuilder.getStops(),
-      transitBuilder.getLocations(),
-      transitBuilder.getLocationGroups(),
+      transitBuilder.getAreaStops(),
+      transitBuilder.getGroupStops(),
       transitBuilder.getRoutes(),
       currentNetexIndex.getRouteById(),
       currentNetexIndex.getJourneyPatternsById(),
@@ -455,7 +470,7 @@ public class NetexMapper {
     for (NoticeAssignment noticeAssignment : currentNetexIndex
       .getNoticeAssignmentById()
       .localValues()) {
-      Multimap<TransitEntity, Notice> noticesByElementId;
+      Multimap<AbstractTransitEntity, Notice> noticesByElementId;
       noticesByElementId = noticeAssignmentMapper.map(noticeAssignment);
       transitBuilder.getNoticeAssignments().putAll(noticesByElementId);
     }

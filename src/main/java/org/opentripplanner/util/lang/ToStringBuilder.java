@@ -1,9 +1,11 @@
 package org.opentripplanner.util.lang;
 
 import static java.lang.Boolean.TRUE;
+import static org.opentripplanner.util.time.DurationUtils.durationToStr;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -80,6 +82,14 @@ public class ToStringBuilder {
     return addIfNotNull(name, num, n -> numFormat.formatNumber(n, unit));
   }
 
+  public ToStringBuilder addCost(String name, Integer cost, Integer ignoreValue) {
+    return addIfNotIgnored(name, cost, ignoreValue, OtpNumberFormat::formatCost);
+  }
+
+  public ToStringBuilder addCostCenti(String name, Integer cost, Integer ignoreValue) {
+    return addIfNotIgnored(name, cost, ignoreValue, OtpNumberFormat::formatCostCenti);
+  }
+
   public ToStringBuilder addBool(String name, Boolean value) {
     return addIfNotNull(name, value);
   }
@@ -141,6 +151,10 @@ public class ToStringBuilder {
   /** Add collection if not null or not empty, all elements are added */
   public ToStringBuilder addCol(String name, Collection<?> c) {
     return addIfNotNull(name, c == null || c.isEmpty() ? null : c);
+  }
+
+  public ToStringBuilder addCol(String name, Collection<?> c, Collection<?> ignoreValue) {
+    return addIfNotIgnored(name, c, ignoreValue, Objects::toString);
   }
 
   /**
@@ -241,6 +255,14 @@ public class ToStringBuilder {
   }
 
   /**
+   * Add the TIME part in the local system timezone using 24 hours. Format:  HH:mm:ss. Note! The
+   * DATE is not printed. {@code null} value is ignored.
+   */
+  public ToStringBuilder addDate(String name, LocalDate time) {
+    return addIfNotNull(name, time, DateTimeFormatter.ISO_LOCAL_DATE::format);
+  }
+
+  /**
    * Add a duration to the string in format like '3h4m35s'. Each component (hours, minutes, and or
    * seconds) is only added if they are not zero {@code 0}. This is the same format as the {@link
    * Duration#toString()}, but without the 'PT' prefix. {@code null} value is ignored.
@@ -258,13 +280,20 @@ public class ToStringBuilder {
     return addIfNotIgnored(name, durationSeconds, ignoreValue, DurationUtils::durationToStr);
   }
 
+  /**
+   * Same as {@link #addDuration(String, Duration, Duration)} with ignore-value {@code null}.
+   */
   public ToStringBuilder addDuration(String name, Duration duration) {
-    return addIfNotIgnored(
-      name,
-      duration,
-      null,
-      d -> DurationUtils.durationToStr((int) d.toSeconds())
-    );
+    return addDuration(name, duration, null);
+  }
+
+  /**
+   * Add a duration to the string in format like '3h4m35s'. Each component (hours, minutes, and or
+   * seconds) is only added if they are not zero {@code 0}. This is the same format as the {@link
+   * Duration#toString()}, but without the 'PT' prefix.
+   */
+  public ToStringBuilder addDuration(String name, Duration duration, Duration ignoreValue) {
+    return addIfNotIgnored(name, duration, ignoreValue, d -> durationToStr((int) d.toSeconds()));
   }
 
   @Override

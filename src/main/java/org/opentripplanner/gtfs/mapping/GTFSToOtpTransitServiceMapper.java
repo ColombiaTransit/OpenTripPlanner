@@ -9,16 +9,18 @@ import static org.onebusaway.gtfs.model.Stop.LOCATION_TYPE_STOP;
 import java.util.Collection;
 import java.util.function.Function;
 import org.onebusaway.gtfs.services.GtfsRelationalDao;
+import org.opentripplanner.ext.fares.model.FareRulesData;
 import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.model.ShapePoint;
 import org.opentripplanner.model.impl.OtpTransitServiceBuilder;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.transit.model.site.Station;
-import org.opentripplanner.transit.model.site.Stop;
+import org.opentripplanner.util.OTPFeature;
 
 /**
  * This class is responsible for mapping between GTFS DAO objects and into OTP Transit model.
- * General mapping code or reusable bussiness logic should be moved into the Builder; hence reusable
+ * General mapping code or reusable business logic should be moved into the Builder; hence reusable
  * for other import modules.
  */
 public class GTFSToOtpTransitServiceMapper {
@@ -63,13 +65,21 @@ public class GTFSToOtpTransitServiceMapper {
 
   private final FareRuleMapper fareRuleMapper;
 
+  private final FareProductMapper fareProductMapper;
+
+  private final FareLegRuleMapper fareLegRuleMapper;
+
+  private final FareTransferRuleMapper fareTransferRuleMapper;
+
   private final DirectionMapper directionMapper;
 
   private final DataImportIssueStore issueStore;
 
   private final GtfsRelationalDao data;
 
-  private final OtpTransitServiceBuilder builder = new OtpTransitServiceBuilder();
+  private final OtpTransitServiceBuilder builder;
+
+  private final FareRulesData fareRulesBuilder = new FareRulesData();
 
   private final TranslationHelper translationHelper;
   private final boolean discardMinTransferTimes;
@@ -80,11 +90,12 @@ public class GTFSToOtpTransitServiceMapper {
     boolean discardMinTransferTimes,
     GtfsRelationalDao data
   ) {
+    this.issueStore = issueStore;
+    builder = new OtpTransitServiceBuilder(this.issueStore);
     // Create callbacks for mappers to retrieve stop and stations
     Function<FeedScopedId, Station> stationLookup = id -> builder.getStations().get(id);
-    Function<FeedScopedId, Stop> stopLookup = id -> builder.getStops().get(id);
+    Function<FeedScopedId, RegularStop> stopLookup = id -> builder.getStops().get(id);
 
-    this.issueStore = issueStore;
     this.data = data;
     this.discardMinTransferTimes = discardMinTransferTimes;
     translationHelper = new TranslationHelper();
@@ -98,9 +109,9 @@ public class GTFSToOtpTransitServiceMapper {
     locationGroupMapper = new LocationGroupMapper(stopMapper, locationMapper);
     pathwayMapper =
       new PathwayMapper(stopMapper, entranceMapper, pathwayNodeMapper, boardingAreaMapper);
-    routeMapper = new RouteMapper(agencyMapper, issueStore);
+    routeMapper = new RouteMapper(agencyMapper, issueStore, translationHelper);
     directionMapper = new DirectionMapper(issueStore);
-    tripMapper = new TripMapper(routeMapper, directionMapper);
+    tripMapper = new TripMapper(routeMapper, directionMapper, translationHelper);
     bookingRuleMapper = new BookingRuleMapper();
     stopTimeMapper =
       new StopTimeMapper(
@@ -108,24 +119,30 @@ public class GTFSToOtpTransitServiceMapper {
         locationMapper,
         locationGroupMapper,
         tripMapper,
-        bookingRuleMapper
+        bookingRuleMapper,
+        translationHelper
       );
     frequencyMapper = new FrequencyMapper(tripMapper);
     fareRuleMapper = new FareRuleMapper(routeMapper, fareAttributeMapper);
+    fareProductMapper = new FareProductMapper();
+    fareLegRuleMapper = new FareLegRuleMapper(fareProductMapper, issueStore);
+    fareTransferRuleMapper = new FareTransferRuleMapper(fareProductMapper, issueStore);
   }
 
   public OtpTransitServiceBuilder getBuilder() {
     return builder;
   }
 
-  public void mapStopTripAndRouteDatantoBuilder() {
+  public FareRulesData getFareRulesService() {
+    return fareRulesBuilder;
+  }
+
+  public void mapStopTripAndRouteDataIntoBuilder() {
     translationHelper.importTranslations(data.getAllTranslations(), data.getAllFeedInfos());
 
     builder.getAgenciesById().addAll(agencyMapper.map(data.getAllAgencies()));
     builder.getCalendarDates().addAll(serviceCalendarDateMapper.map(data.getAllCalendarDates()));
     builder.getCalendars().addAll(serviceCalendarMapper.map(data.getAllCalendars()));
-    builder.getFareAttributes().addAll(fareAttributeMapper.map(data.getAllFareAttributes()));
-    builder.getFareRules().addAll(fareRuleMapper.map(data.getAllFareRules()));
     builder.getFeedInfos().addAll(feedInfoMapper.map(data.getAllFeedInfos()));
     builder.getFrequencies().addAll(frequencyMapper.map(data.getAllFrequencies()));
     builder.getRoutes().addAll(routeMapper.map(data.getAllRoutes()));
@@ -135,11 +152,26 @@ public class GTFSToOtpTransitServiceMapper {
 
     mapGtfsStopsToOtpTypes(data.getAllStops());
 
-    builder.getLocations().addAll(locationMapper.map(data.getAllLocations()));
-    builder.getLocationGroups().addAll(locationGroupMapper.map(data.getAllLocationGroups()));
+    if (OTPFeature.FlexRouting.isOn()) {
+      // Stop areas and Stop groups are only used in FLEX routes
+      builder.getAreaStops().addAll(locationMapper.map(data.getAllLocations()));
+      builder.getGroupStops().addAll(locationGroupMapper.map(data.getAllLocationGroups()));
+    }
+
     builder.getPathways().addAll(pathwayMapper.map(data.getAllPathways()));
     builder.getStopTimesSortedByTrip().addAll(stopTimeMapper.map(data.getAllStopTimes()));
     builder.getTripsById().addAll(tripMapper.map(data.getAllTrips()));
+
+    fareRulesBuilder.fareAttributes().addAll(fareAttributeMapper.map(data.getAllFareAttributes()));
+    fareRulesBuilder.fareRules().addAll(fareRuleMapper.map(data.getAllFareRules()));
+
+    // we don't want to store the list of fare products if they are not required by a fare rule
+    // or a fare transfer rule, that's why this is not added to the builder
+    fareProductMapper.map(data.getAllFareProducts());
+    fareRulesBuilder.fareLegRules().addAll(fareLegRuleMapper.map(data.getAllFareLegRules()));
+    fareRulesBuilder
+      .fareTransferRules()
+      .addAll(fareTransferRuleMapper.map(data.getAllFareTransferRules()));
 
     mapAndAddTransfersToBuilder();
   }

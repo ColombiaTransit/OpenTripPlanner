@@ -2,20 +2,20 @@ package org.opentripplanner.graph_builder.module.interlining;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.opentripplanner.graph_builder.DataImportIssueStore.noopIssueStore;
 import static org.opentripplanner.transit.model._data.TransitModelForTest.stopTime;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.opentripplanner.graph_builder.DataImportIssueStore;
 import org.opentripplanner.gtfs.mapping.StaySeatedNotAllowed;
-import org.opentripplanner.model.StopPattern;
-import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.model.plan.PlanTestConstants;
-import org.opentripplanner.model.transfer.TransferService;
-import org.opentripplanner.routing.trippattern.Deduplicator;
-import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.model.transfer.DefaultTransferService;
 import org.opentripplanner.transit.model._data.TransitModelForTest;
+import org.opentripplanner.transit.model.framework.Deduplicator;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.network.StopPattern;
+import org.opentripplanner.transit.model.network.TripPattern;
+import org.opentripplanner.transit.model.timetable.TripTimes;
 
 class InterlineProcessorTest implements PlanTestConstants {
 
@@ -27,13 +27,8 @@ class InterlineProcessorTest implements PlanTestConstants {
 
   @Test
   void run() {
-    var transferService = new TransferService();
-    var processor = new InterlineProcessor(
-      transferService,
-      List.of(),
-      100,
-      DataImportIssueStore.noop()
-    );
+    var transferService = new DefaultTransferService();
+    var processor = new InterlineProcessor(transferService, List.of(), 100, noopIssueStore());
 
     var createdTransfers = processor.run(patterns);
     assertEquals(1, createdTransfers.size());
@@ -45,7 +40,7 @@ class InterlineProcessorTest implements PlanTestConstants {
 
   @Test
   void staySeatedNotAllowed() {
-    var transferService = new TransferService();
+    var transferService = new DefaultTransferService();
 
     var fromTrip = patterns.get(0).getTrip(0);
     var toTrip = patterns.get(1).getTrip(0);
@@ -56,7 +51,7 @@ class InterlineProcessorTest implements PlanTestConstants {
       transferService,
       List.of(notAllowed),
       100,
-      DataImportIssueStore.noop()
+      noopIssueStore()
     );
 
     var createdTransfers = processor.run(patterns);
@@ -75,7 +70,11 @@ class InterlineProcessorTest implements PlanTestConstants {
     var stopTimes = List.of(stopTime(trip, 0), stopTime(trip, 1), stopTime(trip, 2));
     var stopPattern = new StopPattern(stopTimes);
 
-    var tp = new TripPattern(TransitModelForTest.id(tripId), trip.getRoute(), stopPattern);
+    var tp = TripPattern
+      .of(TransitModelForTest.id(tripId))
+      .withRoute(trip.getRoute())
+      .withStopPattern(stopPattern)
+      .build();
     var tripTimes = new TripTimes(trip, stopTimes, new Deduplicator());
     tp.add(tripTimes);
     return tp;

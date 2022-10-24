@@ -1,50 +1,52 @@
 package org.opentripplanner.transit.service;
 
-import com.google.common.collect.Multimap;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import org.opentripplanner.common.geometry.HashGridSpatialIndex;
+import javax.inject.Inject;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.opentripplanner.ext.flex.FlexIndex;
 import org.opentripplanner.model.FeedInfo;
-import org.opentripplanner.model.FlexStopLocation;
-import org.opentripplanner.model.MultiModalStation;
-import org.opentripplanner.model.Notice;
 import org.opentripplanner.model.PathTransfer;
 import org.opentripplanner.model.StopTimesInPattern;
 import org.opentripplanner.model.Timetable;
 import org.opentripplanner.model.TimetableSnapshot;
-import org.opentripplanner.model.TimetableSnapshotProvider;
-import org.opentripplanner.model.TripIdAndServiceDate;
-import org.opentripplanner.model.TripOnServiceDate;
-import org.opentripplanner.model.TripPattern;
 import org.opentripplanner.model.TripTimeOnDate;
 import org.opentripplanner.model.calendar.CalendarService;
-import org.opentripplanner.routing.DatedServiceJourneyHelper;
+import org.opentripplanner.model.transfer.TransferService;
 import org.opentripplanner.routing.algorithm.raptoradapter.transit.TransitLayer;
 import org.opentripplanner.routing.services.TransitAlertService;
 import org.opentripplanner.routing.stoptimes.ArrivalDeparture;
 import org.opentripplanner.routing.stoptimes.StopTimesHelper;
-import org.opentripplanner.routing.vertextype.TransitStopVertex;
+import org.opentripplanner.transit.model.basic.Notice;
 import org.opentripplanner.transit.model.basic.TransitMode;
+import org.opentripplanner.transit.model.basic.WgsCoordinate;
+import org.opentripplanner.transit.model.framework.AbstractTransitEntity;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
-import org.opentripplanner.transit.model.framework.TransitEntity;
 import org.opentripplanner.transit.model.network.GroupOfRoutes;
 import org.opentripplanner.transit.model.network.Route;
+import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.model.organization.Agency;
 import org.opentripplanner.transit.model.organization.Operator;
+import org.opentripplanner.transit.model.site.AreaStop;
+import org.opentripplanner.transit.model.site.MultiModalStation;
+import org.opentripplanner.transit.model.site.RegularStop;
 import org.opentripplanner.transit.model.site.Station;
-import org.opentripplanner.transit.model.site.Stop;
 import org.opentripplanner.transit.model.site.StopLocation;
+import org.opentripplanner.transit.model.site.StopLocationsGroup;
 import org.opentripplanner.transit.model.timetable.Trip;
+import org.opentripplanner.transit.model.timetable.TripIdAndServiceDate;
+import org.opentripplanner.transit.model.timetable.TripOnServiceDate;
+import org.opentripplanner.updater.GraphUpdaterStatus;
 
 /**
  * Default implementation of the Transit Service and Transit Editor Service.
@@ -63,216 +65,201 @@ public class DefaultTransitService implements TransitEditorService {
    */
   private TimetableSnapshot timetableSnapshot;
 
+  @Inject
   public DefaultTransitService(TransitModel transitModel) {
     this.transitModel = transitModel;
     this.transitModelIndex = transitModel.getTransitModelIndex();
   }
 
-  /** {@link TransitModel#getFeedIds()} */
   @Override
   public Collection<String> getFeedIds() {
     return this.transitModel.getFeedIds();
   }
 
-  /** {@link TransitModel#getAgencies()} */
   @Override
   public Collection<Agency> getAgencies() {
     return this.transitModel.getAgencies();
   }
 
-  /** {@link TransitModel#getFeedInfo(String)} ()} */
   @Override
   public FeedInfo getFeedInfo(String feedId) {
     return this.transitModel.getFeedInfo(feedId);
   }
 
-  /** {@link TransitModel#addAgency(String, Agency)} */
   @Override
   public void addAgency(String feedId, Agency agency) {
     this.transitModel.addAgency(feedId, agency);
   }
 
-  /** {@link TransitModel#addFeedInfo(FeedInfo)} */
   @Override
   public void addFeedInfo(FeedInfo info) {
     this.transitModel.addFeedInfo(info);
   }
 
-  /** {@link TransitModel#getOperators()} */
   @Override
   public Collection<Operator> getOperators() {
     return this.transitModel.getOperators();
   }
 
-  /** {@link TransitModel#getNoticesByElement()} */
   @Override
-  public Multimap<TransitEntity, Notice> getNoticesByElement() {
-    return this.transitModel.getNoticesByElement();
+  public Collection<Notice> getNoticesByEntity(AbstractTransitEntity<?, ?> entity) {
+    return this.transitModel.getNoticesByElement().get(entity);
   }
 
-  /** {@link TransitModel#addNoticeAssignments(Multimap)} */
-  @Override
-  public void addNoticeAssignments(Multimap<TransitEntity, Notice> noticesByElement) {
-    this.transitModel.addNoticeAssignments(noticesByElement);
-  }
-
-  /** {@link TransitModel#getNoticesByEntity(TransitEntity)} */
-  @Override
-  public Collection<Notice> getNoticesByEntity(TransitEntity entity) {
-    return this.transitModel.getNoticesByEntity(entity);
-  }
-
-  /** {@link TransitModel#getTripPatternForId(FeedScopedId)} */
   @Override
   public TripPattern getTripPatternForId(FeedScopedId id) {
     return this.transitModel.getTripPatternForId(id);
   }
 
-  /** {@link TransitModel#getAllTripPatterns()} ()} */
   @Override
   public Collection<TripPattern> getAllTripPatterns() {
     return this.transitModel.getAllTripPatterns();
   }
 
-  /** {@link TransitModel#getNotices()} */
   @Override
   public Collection<Notice> getNotices() {
-    return this.transitModel.getNotices();
+    return this.transitModel.getNoticesByElement().values();
   }
 
-  /** {@link StopModel#getStationById(FeedScopedId)} */
   @Override
   public Station getStationById(FeedScopedId id) {
     return this.transitModel.getStopModel().getStationById(id);
   }
 
-  /** {@link StopModel#getMultiModalStation(FeedScopedId)} */
   @Override
   public MultiModalStation getMultiModalStation(FeedScopedId id) {
     return this.transitModel.getStopModel().getMultiModalStation(id);
   }
 
-  /** {@link StopModel#getStations()} */
   @Override
   public Collection<Station> getStations() {
-    return this.transitModel.getStopModel().getStations();
+    return this.transitModel.getStopModel().listStations();
   }
 
-  /** {@link TransitModel#getServiceCodes()} */
   @Override
-  public Map<FeedScopedId, Integer> getServiceCodes() {
-    return this.transitModel.getServiceCodes();
+  public Integer getServiceCodeForId(FeedScopedId id) {
+    return this.transitModel.getServiceCodes().get(id);
   }
 
-  /** {@link StopModel#getLocationById(FeedScopedId)} */
   @Override
-  public FlexStopLocation getLocationById(FeedScopedId id) {
-    return this.transitModel.getStopModel().getLocationById(id);
+  public TIntSet getServiceCodesRunningForDate(LocalDate serviceDate) {
+    return transitModelIndex
+      .getServiceCodesRunningForDate()
+      .getOrDefault(serviceDate, new TIntHashSet());
   }
 
-  /** {@link TransitModel#getAllFlexStopsFlat()} */
   @Override
-  public Set<StopLocation> getAllFlexStopsFlat() {
-    return this.transitModel.getAllFlexStopsFlat();
+  public AreaStop getAreaStop(FeedScopedId id) {
+    return this.transitModel.getStopModel().getAreaStop(id);
   }
 
-  /** {@link TransitModelIndex#getAgencyForId(FeedScopedId)} */
   @Override
   public Agency getAgencyForId(FeedScopedId id) {
     return this.transitModelIndex.getAgencyForId(id);
   }
 
-  /** {@link StopModelIndex#getStopForId(FeedScopedId)} */
   @Override
-  public StopLocation getStopForId(FeedScopedId id) {
-    return this.transitModel.getStopModel().getStopModelIndex().getStopForId(id);
+  public RegularStop getRegularStop(FeedScopedId id) {
+    return this.transitModel.getStopModel().getRegularStop(id);
   }
 
-  /** {@link TransitModelIndex#getRouteForId(FeedScopedId)} */
   @Override
   public Route getRouteForId(FeedScopedId id) {
     return this.transitModelIndex.getRouteForId(id);
   }
 
-  /** {@link TransitModelIndex#addRoutes(Route)} */
   @Override
   public void addRoutes(Route route) {
     this.transitModelIndex.addRoutes(route);
   }
 
-  /** {@link TransitModelIndex#getRoutesForStop(StopLocation)} */
   @Override
   public Set<Route> getRoutesForStop(StopLocation stop) {
     return this.transitModelIndex.getRoutesForStop(stop);
   }
 
-  /** {@link TransitModelIndex#getPatternsForStop(StopLocation)} */
   @Override
   public Collection<TripPattern> getPatternsForStop(StopLocation stop) {
     return this.transitModelIndex.getPatternsForStop(stop);
   }
 
-  /** {@link TransitModelIndex#getPatternsForStop(StopLocation, TimetableSnapshot)} */
   @Override
-  public Collection<TripPattern> getPatternsForStop(
-    StopLocation stop,
-    TimetableSnapshot timetableSnapshot
-  ) {
-    return this.transitModelIndex.getPatternsForStop(stop, timetableSnapshot);
+  public Collection<Trip> getTripsForStop(StopLocation stop) {
+    return this.transitModelIndex.getTripsForStop(stop);
   }
 
-  /** {@link TransitModelIndex#getAllOperators()} */
   @Override
   public Collection<Operator> getAllOperators() {
     return this.transitModelIndex.getAllOperators();
   }
 
-  /** {@link TransitModelIndex#getOperatorForId()} */
   @Override
-  public Map<FeedScopedId, Operator> getOperatorForId() {
-    return this.transitModelIndex.getOperatorForId();
+  public Operator getOperatorForId(FeedScopedId id) {
+    return this.transitModelIndex.getOperatorForId().get(id);
   }
 
-  /** {@link StopModelIndex#getAllStops()} */
   @Override
-  public Collection<StopLocation> getAllStops() {
-    return this.transitModel.getStopModel().getStopModelIndex().getAllStops();
+  public Collection<StopLocation> listStopLocations() {
+    return transitModel.getStopModel().listStopLocations();
   }
 
-  /** {@link TransitModelIndex#getTripForId()} */
   @Override
-  public Map<FeedScopedId, Trip> getTripForId() {
-    return this.transitModelIndex.getTripForId();
+  public Collection<RegularStop> listRegularStops() {
+    return transitModel.getStopModel().listRegularStops();
   }
 
-  /** {@link TransitModelIndex#getAllRoutes()} */
+  @Override
+  public StopLocation getStopLocation(FeedScopedId id) {
+    return transitModel.getStopModel().getStopLocation(id);
+  }
+
+  @Override
+  public Collection<StopLocationsGroup> listStopLocationGroups() {
+    return transitModel.getStopModel().listStopLocationGroups();
+  }
+
+  @Override
+  public StopLocationsGroup getStopLocationsGroup(FeedScopedId id) {
+    return transitModel.getStopModel().getStopLocationsGroup(id);
+  }
+
+  @Override
+  public Trip getTripForId(FeedScopedId id) {
+    return this.transitModelIndex.getTripForId().get(id);
+  }
+
+  @Override
+  public Collection<Trip> getAllTrips() {
+    return transitModelIndex.getTripForId().values();
+  }
+
   @Override
   public Collection<Route> getAllRoutes() {
     return this.transitModelIndex.getAllRoutes();
   }
 
-  /** {@link TransitModelIndex#getPatternForTrip()} */
   @Override
-  public Map<Trip, TripPattern> getPatternForTrip() {
-    return this.transitModelIndex.getPatternForTrip();
+  public TripPattern getPatternForTrip(Trip trip) {
+    return this.transitModelIndex.getPatternForTrip().get(trip);
   }
 
-  /** {@link TransitModelIndex#getPatternsForFeedId()} */
   @Override
-  public Multimap<String, TripPattern> getPatternsForFeedId() {
-    return this.transitModelIndex.getPatternsForFeedId();
+  public TripPattern getPatternForTrip(Trip trip, LocalDate serviceDate) {
+    TripPattern realtimePattern = getRealtimeAddedTripPattern(trip.getId(), serviceDate);
+    if (realtimePattern != null) {
+      return realtimePattern;
+    }
+    return getPatternForTrip(trip);
   }
 
-  /** {@link TransitModelIndex#getPatternsForRoute()} */
   @Override
-  public Multimap<Route, TripPattern> getPatternsForRoute() {
-    return this.transitModelIndex.getPatternsForRoute();
+  public Collection<TripPattern> getPatternsForRoute(Route route) {
+    return this.transitModelIndex.getPatternsForRoute().get(route);
   }
 
-  /** {@link StopModelIndex#getMultiModalStationForStations()} */
   @Override
-  public Map<Station, MultiModalStation> getMultiModalStationForStations() {
-    return this.transitModel.getStopModel().getStopModelIndex().getMultiModalStationForStations();
+  public MultiModalStation getMultiModalStationForStation(Station station) {
+    return this.transitModel.getStopModel().getMultiModalStationForStation(station);
   }
 
   /**
@@ -285,8 +272,8 @@ public class DefaultTransitService implements TransitEditorService {
    * TODO: Add frequency based trips
    *
    * @param stop                  Stop object to perform the search for
-   * @param startTime             Start time for the search. Seconds from UNIX epoch
-   * @param timeRange             Searches forward for timeRange seconds from startTime
+   * @param startTime             Start time for the search.
+   * @param timeRange             Searches forward for timeRange from startTime
    * @param numberOfDepartures    Number of departures to fetch per pattern
    * @param arrivalDeparture      Filter by arrivals, departures, or both
    * @param includeCancelledTrips If true, cancelled trips will also be included in result.
@@ -294,15 +281,14 @@ public class DefaultTransitService implements TransitEditorService {
   @Override
   public List<StopTimesInPattern> stopTimesForStop(
     StopLocation stop,
-    long startTime,
-    int timeRange,
+    Instant startTime,
+    Duration timeRange,
     int numberOfDepartures,
     ArrivalDeparture arrivalDeparture,
     boolean includeCancelledTrips
   ) {
     return StopTimesHelper.stopTimesForStop(
       this,
-      lazyGetTimeTableSnapShot(),
       stop,
       startTime,
       timeRange,
@@ -323,9 +309,16 @@ public class DefaultTransitService implements TransitEditorService {
   public List<StopTimesInPattern> getStopTimesForStop(
     StopLocation stop,
     LocalDate serviceDate,
-    ArrivalDeparture arrivalDeparture
+    ArrivalDeparture arrivalDeparture,
+    boolean includeCancellations
   ) {
-    return StopTimesHelper.stopTimesForStop(this, stop, serviceDate, arrivalDeparture);
+    return StopTimesHelper.stopTimesForStop(
+      this,
+      stop,
+      serviceDate,
+      arrivalDeparture,
+      includeCancellations
+    );
   }
 
   /**
@@ -338,8 +331,8 @@ public class DefaultTransitService implements TransitEditorService {
    *
    * @param stop               Stop object to perform the search for
    * @param pattern            Pattern object to perform the search for
-   * @param startTime          Start time for the search. Seconds from UNIX epoch
-   * @param timeRange          Searches forward for timeRange seconds from startTime
+   * @param startTime          Start time for the search.
+   * @param timeRange          Searches forward for timeRange from startTime
    * @param numberOfDepartures Number of departures to fetch per pattern
    * @param arrivalDeparture   Filter by arrivals, departures, or both
    */
@@ -347,20 +340,21 @@ public class DefaultTransitService implements TransitEditorService {
   public List<TripTimeOnDate> stopTimesForPatternAtStop(
     StopLocation stop,
     TripPattern pattern,
-    long startTime,
-    int timeRange,
+    Instant startTime,
+    Duration timeRange,
     int numberOfDepartures,
-    ArrivalDeparture arrivalDeparture
+    ArrivalDeparture arrivalDeparture,
+    boolean includeCancellations
   ) {
     return StopTimesHelper.stopTimesForPatternAtStop(
       this,
-      lazyGetTimeTableSnapShot(),
       stop,
       pattern,
       startTime,
       timeRange,
       numberOfDepartures,
-      arrivalDeparture
+      arrivalDeparture,
+      includeCancellations
     );
   }
 
@@ -406,6 +400,24 @@ public class DefaultTransitService implements TransitEditorService {
       : tripPattern.getScheduledTimetable();
   }
 
+  @Override
+  public TripPattern getRealtimeAddedTripPattern(FeedScopedId tripId, LocalDate serviceDate) {
+    TimetableSnapshot timetableSnapshot = lazyGetTimeTableSnapShot();
+    if (timetableSnapshot == null) {
+      return null;
+    }
+    return timetableSnapshot.getRealtimeAddedTripPattern(tripId, serviceDate);
+  }
+
+  @Override
+  public boolean hasRealtimeAddedTripPatterns() {
+    TimetableSnapshot timetableSnapshot = lazyGetTimeTableSnapShot();
+    if (timetableSnapshot == null) {
+      return false;
+    }
+    return timetableSnapshot.hasRealtimeAddedTripPatterns();
+  }
+
   /**
    * Lazy-initialization of TimetableSnapshot
    *
@@ -419,85 +431,80 @@ public class DefaultTransitService implements TransitEditorService {
   }
 
   @Override
-  public TripOnServiceDate getTripOnServiceDateForTripAndDay(
-    FeedScopedId tripId,
-    LocalDate serviceDate
-  ) {
-    return DatedServiceJourneyHelper.getTripOnServiceDate(this, tripId, serviceDate);
-  }
-
-  @Override
   public TripOnServiceDate getTripOnServiceDateById(FeedScopedId datedServiceJourneyId) {
-    return DatedServiceJourneyHelper.getTripOnServiceDate(this, datedServiceJourneyId);
+    TimetableSnapshot timetableSnapshot = lazyGetTimeTableSnapShot();
+    if (timetableSnapshot != null) {
+      TripOnServiceDate tripOnServiceDate = timetableSnapshot
+        .getRealtimeAddedTripOnServiceDate()
+        .get(datedServiceJourneyId);
+      if (tripOnServiceDate != null) {
+        return tripOnServiceDate;
+      }
+    }
+    return transitModelIndex.getTripOnServiceDateById().get(datedServiceJourneyId);
   }
 
   @Override
-  public Map<TripIdAndServiceDate, TripOnServiceDate> getTripOnServiceDateForTripAndDay() {
-    return transitModelIndex.getTripOnServiceDateForTripAndDay();
+  public Collection<TripOnServiceDate> getAllTripOnServiceDates() {
+    return transitModelIndex.getTripOnServiceDateForTripAndDay().values();
   }
 
   @Override
-  public Map<FeedScopedId, TripOnServiceDate> getTripOnServiceDateById() {
-    return transitModelIndex.getTripOnServiceDateById();
+  public TripOnServiceDate getTripOnServiceDateForTripAndDay(
+    TripIdAndServiceDate tripIdAndServiceDate
+  ) {
+    TimetableSnapshot timetableSnapshot = lazyGetTimeTableSnapShot();
+    if (timetableSnapshot != null) {
+      TripOnServiceDate tripOnServiceDate = timetableSnapshot
+        .getRealtimeAddedTripOnServiceDateByTripIdAndServiceDate()
+        .get(tripIdAndServiceDate);
+      if (tripOnServiceDate != null) {
+        return tripOnServiceDate;
+      }
+    }
+    return transitModelIndex.getTripOnServiceDateForTripAndDay().get(tripIdAndServiceDate);
   }
 
-  /** {@link TransitModel#addTransitMode(TransitMode)} */
   @Override
   public void addTransitMode(TransitMode mode) {
     this.transitModel.addTransitMode(mode);
   }
 
-  /** {@link TransitModel#getTransitModes()} */
   @Override
-  public HashSet<TransitMode> getTransitModes() {
+  public Set<TransitMode> getTransitModes() {
     return this.transitModel.getTransitModes();
   }
 
-  /** {@link TransitModel#getTransfersByStop(StopLocation)} */
   @Override
   public Collection<PathTransfer> getTransfersByStop(StopLocation stop) {
     return this.transitModel.getTransfersByStop(stop);
   }
 
-  /** {@link TransitModel#getTimetableSnapshot()} */
-  @Override
-  public TimetableSnapshot getTimetableSnapshot() {
-    return this.transitModel.getTimetableSnapshot();
-  }
-
-  /** {@link TransitModel#getOrSetupTimetableSnapshotProvider(Function)} */
-  @Override
-  public <T extends TimetableSnapshotProvider> T getOrSetupTimetableSnapshotProvider(
-    Function<TransitModel, T> creator
-  ) {
-    return this.transitModel.getOrSetupTimetableSnapshotProvider(creator);
-  }
-
-  /** {@link TransitModel#getTransitLayer()} */
   @Override
   public TransitLayer getTransitLayer() {
     return this.transitModel.getTransitLayer();
   }
 
-  /** {@link TransitModel#setTransitLayer(TransitLayer)} */
+  @Override
+  public TransitLayer getRealtimeTransitLayer() {
+    return this.transitModel.getRealtimeTransitLayer();
+  }
+
   @Override
   public void setTransitLayer(TransitLayer transitLayer) {
     this.transitModel.setTransitLayer(transitLayer);
   }
 
-  /** {@link TransitModel#getCalendarService()} */
   @Override
   public CalendarService getCalendarService() {
     return this.transitModel.getCalendarService();
   }
 
-  /** {@link TransitModel#getTimeZone()} */
   @Override
   public ZoneId getTimeZone() {
     return this.transitModel.getTimeZone();
   }
 
-  /** {@link TransitModel#getTransitAlertService()} */
   @Override
   public TransitAlertService getTransitAlertService() {
     return this.transitModel.getTransitAlertService();
@@ -506,13 +513,6 @@ public class DefaultTransitService implements TransitEditorService {
   @Override
   public FlexIndex getFlexIndex() {
     return this.transitModelIndex.getFlexIndex();
-  }
-
-  @Override
-  public TIntSet getServicesRunningForDate(LocalDate serviceDate) {
-    return transitModelIndex
-      .getServiceCodesRunningForDate()
-      .getOrDefault(serviceDate, new TIntHashSet());
   }
 
   @Override
@@ -525,16 +525,28 @@ public class DefaultTransitService implements TransitEditorService {
     return transitModel.getTransitServiceStarts();
   }
 
-  /** {@link StopModelIndex#getStopVertexForStop()} */
   @Override
-  public Map<Stop, TransitStopVertex> getStopVertexForStop() {
-    return transitModel.getStopModel().getStopVertexForStop();
+  public Collection<RegularStop> findRegularStop(Envelope envelope) {
+    return transitModel.getStopModel().findRegularStops(envelope);
   }
 
-  /** {@link StopModelIndex#getStopSpatialIndex()} */
+  @Override
+  public GraphUpdaterStatus getUpdaterStatus() {
+    return transitModel.getUpdaterManager();
+  }
 
   @Override
-  public HashGridSpatialIndex<TransitStopVertex> getStopSpatialIndex() {
-    return transitModel.getStopModel().getStopModelIndex().getStopSpatialIndex();
+  public Optional<Coordinate> getCenter() {
+    return transitModel.getStopModel().stopLocationCenter().map(WgsCoordinate::asJtsCoordinate);
+  }
+
+  @Override
+  public TransferService getTransferService() {
+    return transitModel.getTransferService();
+  }
+
+  @Override
+  public boolean transitFeedCovers(Instant dateTime) {
+    return transitModel.transitFeedCovers(dateTime);
   }
 }

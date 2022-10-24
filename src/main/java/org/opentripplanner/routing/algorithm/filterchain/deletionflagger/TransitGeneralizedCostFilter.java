@@ -1,24 +1,31 @@
 package org.opentripplanner.routing.algorithm.filterchain.deletionflagger;
 
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
-import java.util.OptionalDouble;
-import java.util.function.DoubleFunction;
 import java.util.stream.Collectors;
 import org.opentripplanner.model.plan.Itinerary;
+import org.opentripplanner.routing.algorithm.filterchain.api.TransitGeneralizedCostFilterParams;
+import org.opentripplanner.routing.api.request.framework.DoubleAlgorithmFunction;
+import org.opentripplanner.routing.api.request.preference.ItineraryFilterPreferences;
 
 /**
  * This filter remove all transit results which have a generalized-cost higher than the max-limit
- * computed by the {@link #costLimitFunction}.
+ * computed by the {@link #costLimitFunction} plus the wait cost given by
+ * {@link TransitGeneralizedCostFilter#getWaitTimeCost}.
  * <p>
  *
- * @see org.opentripplanner.routing.api.request.ItineraryFilterParameters#transitGeneralizedCostLimit
+ * @see ItineraryFilterPreferences#transitGeneralizedCostLimit
  */
 public class TransitGeneralizedCostFilter implements ItineraryDeletionFlagger {
 
-  private final DoubleFunction<Double> costLimitFunction;
+  private final DoubleAlgorithmFunction costLimitFunction;
 
-  public TransitGeneralizedCostFilter(DoubleFunction<Double> costLimitFunction) {
-    this.costLimitFunction = costLimitFunction;
+  private final double intervalRelaxFactor;
+
+  public TransitGeneralizedCostFilter(TransitGeneralizedCostFilterParams params) {
+    this.costLimitFunction = params.costLimitFunction();
+    this.intervalRelaxFactor = params.intervalRelaxFactor();
   }
 
   @Override
@@ -27,22 +34,33 @@ public class TransitGeneralizedCostFilter implements ItineraryDeletionFlagger {
   }
 
   @Override
-  public List<Itinerary> getFlaggedItineraries(List<Itinerary> itineraries) {
-    OptionalDouble minGeneralizedCost = itineraries
+  public List<Itinerary> flagForRemoval(List<Itinerary> itineraries) {
+    List<Itinerary> transitItineraries = itineraries
       .stream()
       .filter(Itinerary::hasTransit)
-      .mapToDouble(it -> it.getGeneralizedCost())
-      .min();
+      .sorted(Comparator.comparingDouble(Itinerary::getGeneralizedCost))
+      .toList();
 
-    if (minGeneralizedCost.isEmpty()) {
-      return List.of();
-    }
-
-    final double maxLimit = costLimitFunction.apply(minGeneralizedCost.getAsDouble());
-
-    return itineraries
+    return transitItineraries
       .stream()
-      .filter(it -> it.hasTransit() && it.getGeneralizedCost() > maxLimit)
+      .filter(it ->
+        transitItineraries
+          .stream()
+          .anyMatch(t ->
+            it.getGeneralizedCost() >
+            (costLimitFunction.calculate(t.getGeneralizedCost()) + getWaitTimeCost(t, it))
+          )
+      )
       .collect(Collectors.toList());
+  }
+
+  private double getWaitTimeCost(Itinerary a, Itinerary b) {
+    return (
+      intervalRelaxFactor *
+      Math.max(
+        Math.abs(ChronoUnit.SECONDS.between(a.startTime(), b.startTime())),
+        Math.abs(ChronoUnit.SECONDS.between(a.endTime(), b.endTime()))
+      )
+    );
   }
 }

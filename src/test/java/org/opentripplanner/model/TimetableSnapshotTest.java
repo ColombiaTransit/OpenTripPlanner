@@ -19,11 +19,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.opentripplanner.ConstantsForTests;
-import org.opentripplanner.OtpModel;
-import org.opentripplanner.routing.trippattern.TripTimes;
+import org.opentripplanner.TestOtpModel;
+import org.opentripplanner.common.model.Result;
 import org.opentripplanner.transit.model.framework.FeedScopedId;
+import org.opentripplanner.transit.model.network.TripPattern;
 import org.opentripplanner.transit.service.TransitModel;
-import org.opentripplanner.updater.stoptime.BackwardsDelayPropagationType;
+import org.opentripplanner.updater.trip.BackwardsDelayPropagationType;
 
 public class TimetableSnapshotTest {
 
@@ -33,8 +34,8 @@ public class TimetableSnapshotTest {
 
   @BeforeAll
   public static void setUp() throws Exception {
-    OtpModel otpModel = ConstantsForTests.buildGtfsGraph(ConstantsForTests.FAKE_GTFS);
-    TransitModel transitModel = otpModel.transitModel;
+    TestOtpModel model = ConstantsForTests.buildGtfsGraph(ConstantsForTests.FAKE_GTFS);
+    TransitModel transitModel = model.transitModel();
 
     feedId = transitModel.getFeedIds().iterator().next();
 
@@ -189,18 +190,18 @@ public class TimetableSnapshotTest {
         TripUpdate tripUpdate = tripUpdateBuilder.build();
 
         // add a new timetable for today, commit, and everything should match
-        assertTrue(updateResolver(resolver, pattern, tripUpdate, today));
+        assertTrue(updateResolver(resolver, pattern, tripUpdate, today).isSuccess());
         snapshot = resolver.commit();
         assertEquals(snapshot.resolve(pattern, today), resolver.resolve(pattern, today));
         assertEquals(snapshot.resolve(pattern, yesterday), resolver.resolve(pattern, yesterday));
 
         // add a new timetable for today, don't commit, and everything should not match
-        assertTrue(updateResolver(resolver, pattern, tripUpdate, today));
+        assertTrue(updateResolver(resolver, pattern, tripUpdate, today).isSuccess());
         assertNotSame(snapshot.resolve(pattern, today), resolver.resolve(pattern, today));
         assertEquals(snapshot.resolve(pattern, yesterday), resolver.resolve(pattern, yesterday));
 
         // add a new timetable for today, on another day, and things should still not match
-        assertTrue(updateResolver(resolver, pattern, tripUpdate, yesterday));
+        assertTrue(updateResolver(resolver, pattern, tripUpdate, yesterday).isSuccess());
         assertNotSame(snapshot.resolve(pattern, yesterday), resolver.resolve(pattern, yesterday));
 
         // commit, and things should match
@@ -258,13 +259,13 @@ public class TimetableSnapshotTest {
     assertFalse(resolver.isDirty());
   }
 
-  private boolean updateResolver(
+  private Result<?, UpdateError> updateResolver(
     TimetableSnapshot resolver,
     TripPattern pattern,
     TripUpdate tripUpdate,
     LocalDate serviceDate
   ) {
-    TripTimesPatch tripTimesPatch = pattern
+    var result = pattern
       .getScheduledTimetable()
       .createUpdatedTripTimes(
         tripUpdate,
@@ -272,7 +273,9 @@ public class TimetableSnapshotTest {
         serviceDate,
         BackwardsDelayPropagationType.REQUIRED_NO_DATA
       );
-    TripTimes updatedTripTimes = tripTimesPatch.getTripTimes();
-    return resolver.update(pattern, updatedTripTimes, serviceDate);
+    if (result.isSuccess()) {
+      return resolver.update(pattern, result.successValue().getTripTimes(), serviceDate);
+    }
+    throw new RuntimeException("createUpdatedTripTimes returned an error: " + result);
   }
 }

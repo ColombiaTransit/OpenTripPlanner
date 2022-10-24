@@ -7,7 +7,6 @@
     "carSpeed": 40,
     "wheelchairAccessible": false,
     "numItineraries": 12,
-    "showIntermediateStops": false,
     "transferPenalty": 0,
     "walkReluctance": 4.0,
     "bikeReluctance": 5.0,
@@ -51,7 +50,6 @@
     "carAccelerationSpeed": 2.9,
     "ignoreRealtimeUpdates": false,
     "disableRemainingWeightHeuristic": false,
-    "disableAlertFiltering": false,
     "geoidElevation": false,
     "maxJourneyDuration": "36h",
     "transferOptimization": {

@@ -139,22 +139,39 @@ public class ValueObjectToStringBuilder {
    * seconds) is only added if they are not zero {@code 0}. This is the same format as the {@link
    * Duration#toString()}, but without the 'PT' prefix.
    */
-  public ValueObjectToStringBuilder addDuration(Integer durationSeconds) {
+  public ValueObjectToStringBuilder addDuration(Duration duration) {
+    return addIt(duration, DurationUtils::durationToStr);
+  }
+
+  /**
+   * Add a duration to the string in format like '3h4m35s'. Each component (hours, minutes, and or
+   * seconds) is only added if they are not zero {@code 0}. This is the same format as the {@link
+   * Duration#toString()}, but without the 'PT' prefix.
+   */
+  public ValueObjectToStringBuilder addDurationSec(Integer durationSeconds) {
     return addIt(durationSeconds, DurationUtils::durationToStr);
   }
 
   /**
-   * Add  a cost in the format $N.NN or $N (id decimals are zero)
+   * Add  a cost in the format $N, as in "transit seconds", not centi-seconds as used by Raptor.
    */
-  public ValueObjectToStringBuilder addCost(Integer cost) {
-    return addIt(cost, OtpNumberFormat::formatCost);
+  public ValueObjectToStringBuilder addCost(Integer costSeconds) {
+    return addIt(costSeconds, OtpNumberFormat::formatCost);
+  }
+
+  /**
+   * Add  a cost in the format $N.NN or $N (if decimals are zero). The cost is interoperated as
+   * a generalized-cost like the cost used by Raptor in "centi-seconds"
+   */
+  public ValueObjectToStringBuilder addCostCenti(Integer costCentiSeconds) {
+    return addIt(costCentiSeconds, OtpNumberFormat::formatCostCenti);
   }
 
   /**
    * Add a cost in the format $N.NNu or $Nu, where 'N' is the number and 'u' is the unit.
    */
-  public ValueObjectToStringBuilder addCost(Integer cost, String unit) {
-    return addIt(cost, it -> OtpNumberFormat.formatCost(it, unit));
+  public ValueObjectToStringBuilder addCostCenti(Integer costCentiSeconds, String unit) {
+    return addIt(costCentiSeconds, it -> OtpNumberFormat.formatCost(it, unit));
   }
 
   @Override

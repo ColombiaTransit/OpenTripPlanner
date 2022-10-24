@@ -5,14 +5,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
-import org.opentripplanner.transit.raptor.api.transit.RaptorTransfer;
+import org.opentripplanner.transit.raptor.api.transit.RaptorAccessEgress;
 import org.opentripplanner.transit.raptor.rangeraptor.internalapi.Heuristics;
 import org.opentripplanner.transit.raptor.rangeraptor.internalapi.WorkerLifeCycle;
 import org.opentripplanner.transit.raptor.rangeraptor.standard.besttimes.BestTimes;
 import org.opentripplanner.transit.raptor.rangeraptor.standard.internalapi.BestNumberOfTransfers;
 import org.opentripplanner.transit.raptor.rangeraptor.transit.EgressPaths;
 import org.opentripplanner.transit.raptor.rangeraptor.transit.TransitCalculator;
-import org.opentripplanner.transit.raptor.util.IntUtils;
+import org.opentripplanner.util.lang.IntUtils;
 import org.opentripplanner.util.lang.ToStringBuilder;
 import org.opentripplanner.util.time.TimeUtils;
 
@@ -25,7 +25,7 @@ public class HeuristicsAdapter implements Heuristics {
   private static final int NOT_SET = Integer.MAX_VALUE;
   private final BestTimes times;
   private final BestNumberOfTransfers transfers;
-  private final TIntObjectMap<List<RaptorTransfer>> egressPaths;
+  private final TIntObjectMap<List<RaptorAccessEgress>> egressPaths;
   private final TransitCalculator<?> calculator;
   private int originDepartureTime = -1;
   private boolean aggregatedResultsCalculated = false;
@@ -151,7 +151,7 @@ public class HeuristicsAdapter implements Heuristics {
       boolean stopReachedByTransit = times.isStopReachedByTransit(stop);
 
       if (stopReached || stopReachedByTransit) {
-        for (RaptorTransfer it : list) {
+        for (RaptorAccessEgress it : list) {
           boolean destinationReached = it.stopReachedOnBoard() ? stopReached : stopReachedByTransit;
 
           if (!destinationReached) {

@@ -8,7 +8,6 @@ import static org.opentripplanner.graph_builder.module.FakeGraph.addRegularStopG
 import static org.opentripplanner.graph_builder.module.FakeGraph.buildGraphNoTransit;
 import static org.opentripplanner.graph_builder.module.FakeGraph.link;
 
-import com.google.common.collect.Iterables;
 import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.List;
@@ -17,8 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.opentripplanner.OtpModel;
-import org.opentripplanner.common.geometry.GeometryUtils;
+import org.opentripplanner.TestOtpModel;
 import org.opentripplanner.common.geometry.SphericalDistanceLibrary;
 import org.opentripplanner.common.model.P2;
 import org.opentripplanner.routing.edgetype.StreetEdge;
@@ -32,6 +30,7 @@ import org.opentripplanner.routing.vertextype.StreetVertex;
 import org.opentripplanner.routing.vertextype.TransitStopVertex;
 import org.opentripplanner.transit.model.basic.NonLocalizedString;
 import org.opentripplanner.transit.service.TransitModel;
+import org.opentripplanner.util.geometry.GeometryUtils;
 
 public class LinkingTest {
 
@@ -112,21 +111,21 @@ public class LinkingTest {
   @Test
   public void testStopsLinkedIdentically() throws URISyntaxException {
     // build the graph without the added stops
-    OtpModel otpModel1 = buildGraphNoTransit();
-    Graph g1 = otpModel1.graph;
-    TransitModel transitModel1 = otpModel1.transitModel;
+    TestOtpModel model = buildGraphNoTransit();
+    Graph g1 = model.graph();
+    TransitModel transitModel1 = model.transitModel();
     addRegularStopGrid(g1, transitModel1);
     link(g1, transitModel1);
 
-    OtpModel otpModel2 = buildGraphNoTransit();
-    Graph g2 = otpModel2.graph;
-    TransitModel transitModel2 = otpModel2.transitModel;
+    TestOtpModel model2 = buildGraphNoTransit();
+    Graph g2 = model2.graph();
+    TransitModel transitModel2 = model2.transitModel();
     addExtraStops(g2, transitModel2);
     addRegularStopGrid(g2, transitModel2);
     link(g2, transitModel2);
 
     // compare the linkages
-    for (TransitStopVertex ts : Iterables.filter(g1.getVertices(), TransitStopVertex.class)) {
+    for (TransitStopVertex ts : g1.getVerticesOfType(TransitStopVertex.class)) {
       List<StreetTransitStopLink> stls1 = outgoingStls(ts);
       assertTrue(stls1.size() >= 1);
 

@@ -1,6 +1,5 @@
 package org.opentripplanner.standalone.config.framework.json;
 
-import static java.time.temporal.ChronoUnit.DECADES;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,6 +16,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -33,8 +33,21 @@ public class NodeAdapterTest {
 
   @Test
   public void testAsRawNode() {
-    NodeAdapter subject = newNodeAdapterForTest("{ foo : 'bar' }");
-    assertFalse(subject.rawNode("anObject").has("withText"));
+    NodeAdapter subject = newNodeAdapterForTest("{ child : { foo : 'bar' } }");
+
+    // Define child
+    var child = subject.of("child").asObject();
+
+    // Retrieve child as raw node
+    assertEquals("{\"foo\":\"bar\"}", child.rawNode().toString());
+
+    // Both the root(subject) and the child should report an empty list of unused parameters
+    var up = new ArrayList<>();
+    subject.logAllUnusedParameters(up::add);
+    assertEquals(List.of(), up);
+
+    child.logAllUnusedParameters(up::add);
+    assertEquals(List.of(), up);
   }
 
   @Test
@@ -59,26 +72,24 @@ public class NodeAdapterTest {
   @Test
   public void docInfo() {
     NodeAdapter subject = newNodeAdapterForTest("{ bool: false }");
-    subject.of("bool").withDoc(V2_0, "B Summary").withDescription("Ddd").asBoolean();
-    subject.of("en").withDoc(V2_1, "EN Summary").withExample(DECADES).asEnum(SECONDS);
-    subject.of("em").withDoc(V2_1, "EM Summary").asEnumMap(ChronoUnit.class, String.class);
+    subject.of("bool").since(V2_0).summary("B Summary").description("Ddd").asBoolean();
+    subject.of("en").since(V2_1).summary("EN Summary").asEnum(SECONDS);
+    subject.of("em").since(V2_1).summary("EM Summary").asEnumMap(ChronoUnit.class, String.class);
 
     List<NodeInfo> infos = subject.parametersSorted();
     assertEquals(
       "[" +
       "bool : boolean Required Since 2.0, " +
-      "em : enum map of string Optional Since 2.1, " +
-      "en : enum = \"SECONDS\" Since 2.1" +
+      "en : enum = \"seconds\" Since 2.1, " +
+      "em : enum map of string Optional Since 2.1" +
       "]",
       infos.toString()
     );
     assertEquals("bool", infos.get(0).name());
-    assertEquals(null, infos.get(0).defaultValue());
+    assertNull(infos.get(0).defaultValue());
     assertEquals("B Summary", infos.get(0).summary());
     assertEquals("Ddd", infos.get(0).description());
     assertEquals(BOOLEAN, infos.get(0).type());
-    assertEquals("{NANOS : \"A String\"}", infos.get(1).exampleValueJson());
-    assertEquals(DECADES, infos.get(2).exampleValue());
   }
 
   @Test
@@ -207,13 +218,8 @@ public class NodeAdapterTest {
       () -> subjectMissingB.of("key").asEnumMapAllKeysRequired(AnEnum.class, Boolean.class)
     );
 
-    var subjectWithExtraNode = newNodeAdapterForTest(
-      "{ key : { A: true, b: false, a_B_c: true, extra: true } }"
-    );
-    assertThrows(
-      OtpAppException.class,
-      () -> subjectMissingB.of("key").asEnumMapAllKeysRequired(AnEnum.class, Boolean.class)
-    );
+    // Any extra keys should be ignored for forward/backward compatibility
+    newNodeAdapterForTest("{ key : { A: true, b: false, a_B_c: true, extra: true } }");
   }
 
   @Test
@@ -324,12 +330,6 @@ public class NodeAdapterTest {
 
     // as required duration v2 (with unit)
     assertEquals("PT1S", subject.of("k1").asDuration().toString());
-    assertEquals("PT7S", subject.of("k3").asDuration2(SECONDS).toString());
-
-    // as optional duration v2 (with unit)
-    assertEquals("PT1S", subject.of("k1").asDuration2(null, SECONDS).toString());
-    assertEquals("PT7S", subject.of("k3").asDuration2(null, SECONDS).toString());
-    assertEquals("PT3H", subject.of("missing-key").asDuration2(D3h, SECONDS).toString());
   }
 
   @Test
@@ -420,10 +420,11 @@ public class NodeAdapterTest {
 
     List<ARecord> result = subject
       .of("key")
-      .withDoc(V2_0, "Summary Array")
+      .since(V2_0)
+      .summary("Summary Array")
       .asObjects(
         List.of(),
-        n -> new ARecord(n.of("a").withDoc(V2_1, "Summary Element").asString())
+        n -> new ARecord(n.of("a").since(V2_1).summary("Summary Element").asString())
       );
 
     assertEquals("[ARecord[a=I], ARecord[a=2]]", result.toString());

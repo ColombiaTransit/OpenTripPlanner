@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
@@ -48,17 +47,11 @@ public class StreetEdge
   implements BikeWalkableEdge, Cloneable, CarPickupableEdge, WheelchairTraversalInformation {
 
   private static final Logger LOG = LoggerFactory.getLogger(StreetEdge.class);
-  /* TODO combine these with OSM highway= flags? */
-  public static final int CLASS_STREET = 3;
-  public static final int CLASS_CROSSING = 4;
-  public static final int CLASS_OTHERPATH = 5;
-  public static final int CLASS_OTHER_PLATFORM = 8;
-  public static final int CLASS_TRAIN_PLATFORM = 16;
-  public static final int CLASS_LINK = 32; // on/offramps; OSM calls them "links"
+
   private static final double GREENWAY_SAFETY_FACTOR = 0.1;
   // TODO(flamholz): do something smarter with the car speed here.
   public static final float DEFAULT_CAR_SPEED = 11.2f;
-  /** If you have more than 8 flags, increase flags to short or int */
+  /** If you have more than 16 flags, increase flags to short or int */
   private static final int BACK_FLAG_INDEX = 0;
   private static final int ROUNDABOUT_FLAG_INDEX = 1;
   private static final int HASBOGUSNAME_FLAG_INDEX = 2;
@@ -68,6 +61,7 @@ public class StreetEdge
   private static final int WHEELCHAIR_ACCESSIBLE_FLAG_INDEX = 6;
   private static final int BICYCLE_NOTHRUTRAFFIC = 7;
   private static final int WALK_NOTHRUTRAFFIC = 8;
+  private static final int CLASS_LINK = 9;
   private StreetEdgeCostExtension costExtension;
   /** back, roundabout, stairs, ... */
   private short flags;
@@ -99,8 +93,6 @@ public class StreetEdge
   private I18NString name;
 
   private StreetTraversalPermission permission;
-
-  private int streetClass = CLASS_OTHERPATH;
 
   /**
    * The speed (meters / sec) at which an automobile can traverse this street segment.
@@ -275,23 +267,15 @@ public class StreetEdge
   }
 
   public boolean isNoThruTraffic(TraverseMode traverseMode) {
-    if (traverseMode.isCycling()) {
-      return isBicycleNoThruTraffic();
-    }
-
-    if (traverseMode.isDriving()) {
-      return isMotorVehicleNoThruTraffic();
-    }
-
-    if (traverseMode.isWalking()) {
-      return isWalkNoThruTraffic();
-    }
-
-    return false;
+    return switch (traverseMode) {
+      case WALK -> isWalkNoThruTraffic();
+      case BICYCLE, SCOOTER -> isBicycleNoThruTraffic();
+      case CAR, FLEX -> isMotorVehicleNoThruTraffic();
+    };
   }
 
   /**
-   * Calculate the speed appropriately given the RoutingRequest and traverseMode.
+   * Calculate the speed appropriately given the RouteRequest and traverseMode.
    */
   public double calculateSpeed(
     RoutingPreferences preferences,
@@ -567,14 +551,6 @@ public class StreetEdge
     this.permission = permission;
   }
 
-  public int getStreetClass() {
-    return streetClass;
-  }
-
-  public void setStreetClass(int streetClass) {
-    this.streetClass = streetClass;
-  }
-
   /**
    * Marks that this edge is the reverse of the one defined in the source data. Does NOT mean
    * fromv/tov are reversed.
@@ -624,6 +600,17 @@ public class StreetEdge
 
   public void setStairs(boolean stairs) {
     flags = BitSetUtils.set(flags, STAIRS_FLAG_INDEX, stairs);
+  }
+
+  /**
+   * The edge is part of an osm way, which is of type link
+   */
+  public boolean isLink() {
+    return BitSetUtils.get(flags, CLASS_LINK);
+  }
+
+  public void setLink(boolean link) {
+    flags = BitSetUtils.set(flags, CLASS_LINK, link);
   }
 
   public float getCarSpeed() {
@@ -889,7 +876,7 @@ public class StreetEdge
     splitEdge.flags = this.flags;
     splitEdge.setBicycleSafetyFactor(bicycleSafetyFactor);
     splitEdge.setWalkSafetyFactor(walkSafetyFactor);
-    splitEdge.setStreetClass(getStreetClass());
+    splitEdge.setLink(isLink());
     splitEdge.setCarSpeed(getCarSpeed());
     splitEdge.setElevationExtensionUsingParent(this, fromDistance, toDistance);
   }
@@ -1157,13 +1144,6 @@ public class StreetEdge
     boolean walkingBike,
     boolean wheelchair
   ) {
-    Supplier<Double> nonWheelchairReluctance = () ->
-      StreetEdgeReluctanceCalculator.computeReluctance(
-        preferences,
-        traverseMode,
-        walkingBike,
-        isStairs()
-      );
     double time, weight;
     if (wheelchair) {
       time = getEffectiveWalkDistance() / speed;
@@ -1175,21 +1155,29 @@ public class StreetEdge
           isWheelchairAccessible(),
           isStairs()
         );
-    } else if (walkingBike) {
-      // take slopes into account when walking bikes
-      time = weight = (getEffectiveBikeDistance() / speed);
-      weight *= nonWheelchairReluctance.get();
     } else {
-      // take slopes into account when walking
-      time = getEffectiveWalkDistance() / speed;
-      weight =
-        getEffectiveWalkSafetyDistance() *
-        preferences.walk().safetyFactor() +
-        getEffectiveWalkDistance() *
-        (1 - preferences.walk().safetyFactor());
-      weight /= speed;
-      weight *= nonWheelchairReluctance.get();
+      if (walkingBike) {
+        // take slopes into account when walking bikes
+        time = weight = (getEffectiveBikeDistance() / speed);
+      } else {
+        // take slopes into account when walking
+        time = getEffectiveWalkDistance() / speed;
+        weight =
+          getEffectiveWalkSafetyDistance() *
+          preferences.walk().safetyFactor() +
+          getEffectiveWalkDistance() *
+          (1 - preferences.walk().safetyFactor());
+        weight /= speed;
+      }
+      weight *=
+        StreetEdgeReluctanceCalculator.computeReluctance(
+          preferences,
+          traverseMode,
+          walkingBike,
+          isStairs()
+        );
     }
+
     return new TraversalCosts(time, weight);
   }
 
@@ -1209,9 +1197,7 @@ public class StreetEdge
   ) {
     if (isNoThruTraffic(traverseMode)) {
       // Record transition into no-through-traffic area.
-      if (
-        backEdge instanceof StreetEdge && !((StreetEdge) backEdge).isNoThruTraffic(traverseMode)
-      ) {
+      if (backEdge instanceof StreetEdge sbe && !sbe.isNoThruTraffic(traverseMode)) {
         s1.setEnteredNoThroughTrafficArea();
       }
     } else if (s0.hasEnteredNoThruTrafficArea()) {

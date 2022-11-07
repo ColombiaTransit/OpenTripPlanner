@@ -1,7 +1,6 @@
 package org.opentripplanner.standalone.config.framework.json;
 
-import static java.util.Comparator.comparing;
-import static org.opentripplanner.standalone.config.framework.json.OtpVersion.NA;
+import static org.opentripplanner.standalone.config.framework.json.NodeInfo.TYPE_QUALIFIER;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import javax.annotation.Nonnull;
 import org.opentripplanner.util.OtpAppException;
 
@@ -53,39 +51,27 @@ public class NodeAdapter {
    */
   private final Map<String, NodeInfo> parameters = new HashMap<>();
 
-  private NodeAdapter(@Nonnull JsonNode node, String source, String contextPath) {
+  private boolean usedAsRaw = false;
+
+  private final int level;
+
+  private NodeAdapter(@Nonnull JsonNode node, String source, String contextPath, int level) {
     this.json = node;
     this.source = source;
     this.contextPath = contextPath;
+    this.level = level;
   }
 
   public NodeAdapter(@Nonnull JsonNode node, String source) {
-    this(node, source, null);
+    this(node, source, null, 0);
   }
 
   /**
    * Constructor for nested configuration nodes.
    */
   private NodeAdapter(@Nonnull JsonNode node, @Nonnull NodeAdapter parent, String paramName) {
-    this(node, parent.source, parent.fullPath(paramName));
+    this(node, parent.source, parent.fullPath(paramName), parent.level + 1);
     parent.childrenByName.put(paramName, this);
-  }
-
-  /** @deprecated TODO DOC Use {@link #asList(String, Function)} */
-  @Deprecated
-  public List<NodeAdapter> asList() {
-    List<NodeAdapter> result = new ArrayList<>();
-
-    // Count elements starting at 1
-    int i = 1;
-    for (JsonNode node : json) {
-      String arrayElementName = "[" + i + "]";
-      NodeAdapter child = path(arrayElementName, node);
-      result.add(child);
-      childrenByName.put(arrayElementName, child);
-      ++i;
-    }
-    return result;
   }
 
   public String contextPath() {
@@ -105,7 +91,7 @@ public class NodeAdapter {
   }
 
   public List<NodeInfo> parametersSorted() {
-    return parameters.values().stream().sorted(comparing(NodeInfo::name)).toList();
+    return parameters.values().stream().sorted().toList();
   }
 
   /** Get a child by name. The child must exist. */
@@ -120,21 +106,6 @@ public class NodeAdapter {
 
   public boolean isEmpty() {
     return json.isMissingNode();
-  }
-
-  public <T> List<T> asList(String paramName, Function<NodeAdapter, T> mapper) {
-    return of(paramName)
-      .withDoc(NA, /*TODO DOC*/"TODO")
-      .withDescription(/*TODO DOC*/"TODO")
-      .asObjects(mapper);
-  }
-
-  public <T> List<T> asList(
-    String paramName,
-    List<T> defaultValue,
-    Function<NodeAdapter, T> mapper
-  ) {
-    return of(paramName).withDoc(NA, /*TODO DOC*/"TODO").asObjects(defaultValue, mapper);
   }
 
   /** Delegates to {@link JsonNode#has(String)} */
@@ -156,6 +127,28 @@ public class NodeAdapter {
   }
 
   /**
+   * List all children present in the JSON document.
+   */
+  public Iterator<String> listExistingChildNodes() {
+    return json.fieldNames();
+  }
+
+  /**
+   * List all children parsed - this includes arrays elements.
+   */
+  public List<String> listChildrenByName() {
+    return childrenByName.keySet().stream().sorted().toList();
+  }
+
+  /**
+   * Return the value of the type qualifier or throws an exception if it does not exist.
+   */
+  public String typeQualifier() {
+    assertRequiredFieldExist(TYPE_QUALIFIER);
+    return json.path(TYPE_QUALIFIER).asText();
+  }
+
+  /**
    * Log unused parameters for the entire configuration file/node tree. Only call this method for the
    * root adapter, once for each config file read.
    */
@@ -167,9 +160,28 @@ public class NodeAdapter {
 
   /**
    * Be careful when using this method - this bypasses the NodeAdaptor, and we loose
-   * track of unused parameters and can not generate documentation for this parameter.
+   * track of unused parameters and cannot generate documentation for the children.
+   * <p>
+   * OTP will no longer WARN about unused parameters for this node.
    */
-  public JsonNode rawNode(String paramName) {
+  public JsonNode rawNode() {
+    this.usedAsRaw = true;
+    return json;
+  }
+
+  /**
+   * Return the level for this node, relative to root of the document. Root is at level zero,
+   * roots children are at level one, and so on.
+   */
+  public int level() {
+    return level;
+  }
+
+  /**
+   * Used by {@link ParameterBuilder} to skip one node in the node tree. This method
+   * does work with the unused parameters.
+   */
+  JsonNode rawNode(String paramName) {
     parameters.put(paramName, NodeInfo.ofSkipChild(paramName));
     return json.path(paramName);
   }
@@ -182,10 +194,6 @@ public class NodeAdapter {
   /** Return the node as a pretty JSON string. */
   public String toPrettyString() {
     return json.toPrettyString();
-  }
-
-  public Iterator<String> listExistingChildNodes() {
-    return json.fieldNames();
   }
 
   /* private methods */
@@ -202,6 +210,10 @@ public class NodeAdapter {
    * child nodes.
    */
   private List<String> unusedParams() {
+    if (usedAsRaw) {
+      return List.of();
+    }
+
     List<String> unusedParams = new ArrayList<>();
     Iterator<String> it = json.fieldNames();
     Set<String> parameterNames = parameters.keySet();
